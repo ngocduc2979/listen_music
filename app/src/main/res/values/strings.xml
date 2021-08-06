@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">MyMusic</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="album_fragment">Albums</string>
+    <string name="song_fragment">Songs</string>
+    <string name="artist_fragment">Artists</string>
+    <string name="song_name">Song name</string>
+    <string name="artist_name">Artist name</string>
+    <string name="setting">Setting</string>
+    <string name="menu_songs">Songs</string>
+    <string name="menu_artists">Artists</string>
+    <string name="menu_albums">Albums</string>
+</resources>
