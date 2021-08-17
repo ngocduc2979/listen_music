@@ -1,10 +1,7 @@
-package com.example.mymusic;
+package com.example.mymusic.adapter;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.media.MediaMetadataRetriever;
-import android.media.MediaPlayer;
-import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,13 +15,16 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.mymusic.ObjectSong;
+import com.example.mymusic.OnMusicListener;
+import com.example.mymusic.R;
 
 import java.util.List;
 
-public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MusicViewHolder> {
+public class AdapterSongs extends RecyclerView.Adapter<AdapterSongs.MusicViewHolder> {
     private final String TAG = getClass().getSimpleName();
 
-    private List<Songs> listMusic;
+    private List<ObjectSong> listMusic;
     private Context context;
     private OnMusicListener onMusicListener;
 
@@ -32,23 +32,22 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MusicViewHol
         this.onMusicListener = onMusicListener;
     }
 
-    public SongsAdapter(List<Songs> listMusic, Context context) {
+    public AdapterSongs(List<ObjectSong> listMusic, Context context) {
         this.listMusic = listMusic;
         this.context = context;
     }
 
-    @NonNull
     @Override
     public MusicViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int i) {
 
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.items_song, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.items_song_listsong, parent, false);
 
         return new MusicViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull SongsAdapter.MusicViewHolder holder, int position) {
-        Songs song = listMusic.get(position);
+    public void onBindViewHolder(@NonNull AdapterSongs.MusicViewHolder holder, int position) {
+        ObjectSong song = listMusic.get(position);
 
         holder.tvSongName.setText(song.getSongName());
         holder.tvSongName.setEllipsize(TextUtils.TruncateAt.MARQUEE);
@@ -57,15 +56,13 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MusicViewHol
         holder.tvSingerName.setText(song.getArtistName());
 
         byte[] albumArt = getAlbumArt(listMusic.get(position).getUrlSong());
-        //Log.w("art", listMusic.get(position).getUrlSong());
+        Log.w("art", listMusic.get(position).getUrlSong());
 
-        //if (albumArt != null) {
             Glide.with(context)
                     .load(albumArt)
                     .centerCrop()
-                    .placeholder(R.drawable.image_cover)
+                    .placeholder(R.drawable.background_default_song)
                     .into(holder.imvImageCover);
-        //}
 
         holder.linearLayout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -107,7 +104,6 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.MusicViewHol
         Log.wtf(TAG, "getAlbumArt: " + path);
         MediaMetadataRetriever mediaMetadata = new MediaMetadataRetriever();
         mediaMetadata.setDataSource(path);
-
         return mediaMetadata.getEmbeddedPicture();
     }
 }

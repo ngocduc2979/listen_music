@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/notifi_relaytive_layout"
+    android:layout_width="match_parent"
+    android:layout_height="120dp"
+    android:padding="12dp"
+    android:background="@drawable/background_default_song"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <TextView
+        android:id="@+id/notification_song_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Song name here"
+        android:singleLine="true"
+        android:textColor="#D68B8B"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/notifi_artist"
+        android:layout_marginTop="25dp"
+        android:textColor="#D68B8B"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="artist name here" />
+
+    <ImageButton
+        android:id="@+id/notifi_backSong"
+        android:background="@drawable/ic_baseline_skip_previous_24_brown"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginTop="54dp"/>
+
+    <ImageView
+        android:id="@+id/notifi_pause_play"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_toEndOf="@+id/notifi_backSong"
+        android:layout_toRightOf="@+id/notifi_backSong"
+        android:layout_marginTop="54dp"
+        android:layout_marginLeft="12dp" />
+
+    <ImageButton
+        android:id="@+id/notifi_nextSong"
+        android:background="@drawable/ic_baseline_skip_next_24_brown"
+        android:layout_marginTop="54dp"
+        android:layout_marginLeft="12dp"
+        android:layout_toEndOf="@+id/notifi_pause_play"
+        android:layout_toRightOf="@+id/notifi_pause_play"
+        android:layout_width="32dp"
+        android:layout_height="32dp" />
+
+    <ImageButton
+        android:id="@+id/notifi_close"
+        android:background="@drawable/ic_baseline_close_24_brown"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
+        android:layout_toEndOf="@+id/notifi_nextSong"
+        android:layout_toRightOf="@+id/notifi_nextSong"
+        android:layout_marginTop="54dp"
+        android:layout_marginLeft="12dp" />
+
+</RelativeLayout>

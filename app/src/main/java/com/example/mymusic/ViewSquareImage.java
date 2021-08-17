@@ -5,16 +5,16 @@ import android.util.AttributeSet;
 
 import androidx.cardview.widget.CardView;
 
-public class SquareImageView extends CardView {
-    public SquareImageView(Context context) {
+public class ViewSquareImage extends CardView {
+    public ViewSquareImage(Context context) {
         super(context);
     }
 
-    public SquareImageView(Context context,  AttributeSet attrs) {
+    public ViewSquareImage(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public SquareImageView(Context context,  AttributeSet attrs, int defStyleAttr) {
+    public ViewSquareImage(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
     }
 

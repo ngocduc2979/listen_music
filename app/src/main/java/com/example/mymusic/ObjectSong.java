@@ -1,6 +1,6 @@
 package com.example.mymusic;
 
-public class Songs {
+public class ObjectSong {
 
     private String songName;
     private String artistName;
@@ -8,7 +8,7 @@ public class Songs {
     private String album;
     private String duration;
 
-    public Songs(String songName, String artistName, String urlSong, String album, String duration) {
+    public ObjectSong(String songName, String artistName, String urlSong, String album, String duration) {
         this.songName = songName;
         this.artistName = artistName;
         this.urlSong = urlSong;

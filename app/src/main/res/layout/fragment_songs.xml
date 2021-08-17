@@ -3,11 +3,82 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".SongsFragment">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".fragment.FragmentSongs">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_list_songs"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <RelativeLayout
+        android:id="@+id/layout_play_music"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:padding="10dp">
+
+        <ImageView
+            android:id="@+id/imv_imageCover"
+            android:background="@drawable/background_default_song"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:layout_centerVertical="true"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@+id/imv_imageCover"
+            android:layout_toRightOf="@+id/imv_imageCover"
+            android:layout_centerVertical="true"
+            android:orientation="vertical"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_toLeftOf="@+id/imb_back"
+            android:layout_toStartOf="@+id/imb_back">
+
+            <TextView
+                android:id="@+id/tv_song_name"
+                android:text="Song name"
+                android:singleLine="true"
+                android:textSize="16sp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <TextView
+                android:id="@+id/tv_artist_name"
+                android:text="artist name"
+                android:singleLine="true"
+                android:textSize="12sp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/imb_next"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:background="@drawable/ic_baseline_skip_next_24_brown"
+            android:layout_centerVertical="true"
+            android:layout_alignParentRight="true"/>
+
+        <ImageButton
+            android:id="@+id/imb_pause_play"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:background="@drawable/ic_baseline_pause_24_brown"
+            android:layout_centerVertical="true"
+            android:layout_toLeftOf="@+id/imb_next"/>
+
+        <ImageButton
+            android:id="@+id/imb_back"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:background="@drawable/ic_baseline_skip_previous_24_brown"
+            android:layout_centerVertical="true"
+            android:layout_toLeftOf="@+id/imb_pause_play"/>
+
+    </RelativeLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
