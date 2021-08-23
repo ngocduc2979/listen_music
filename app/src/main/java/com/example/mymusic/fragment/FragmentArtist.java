@@ -1,12 +1,15 @@
 package com.example.mymusic.fragment;
 
 import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -39,8 +42,11 @@ public class FragmentArtist extends Fragment implements OnAtistListener {
         super.onCreate(savedInstanceState);
 
         Log.wtf("ArtistFragment", "onCreate");
-        list = listSongs;
+
+        loadSong();
+
         loadListSong();
+
         for (int i = 0; i < listSongsArtist.size(); i++){
             Log.wtf("checklist", listSongsArtist.get(i).getArtistName());
         }
@@ -86,6 +92,25 @@ public class FragmentArtist extends Fragment implements OnAtistListener {
         artistAdapter.setOnAtistListener(this);
         recyclerView.setAdapter(artistAdapter);
         artistAdapter.notifyDataSetChanged();
+    }
+
+    private void loadSong() {
+        list.clear();
+        Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        String selection = MediaStore.Audio.Media.IS_MUSIC;
+        Cursor cursor = getActivity().getContentResolver().query(uri, null, selection, null, null);
+
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                String url = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
+                String singerName = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
+                String songName = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME));
+                String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
+                String duration = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION));
+
+                list.add(new ObjectSong(songName, singerName, url, album, duration));
+            }
+        }
     }
 
     @Override

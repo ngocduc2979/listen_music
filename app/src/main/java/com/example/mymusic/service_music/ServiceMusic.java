@@ -20,6 +20,7 @@ import android.widget.RemoteViews;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -29,13 +30,14 @@ import com.example.mymusic.R;
 import com.example.mymusic.activity.ActivityPlayMusic;
 import com.example.mymusic.activity.MainActivity;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 import static com.example.mymusic.NotificationChannelClass.CHANNEL_ID;
 import static com.example.mymusic.fragment.FragmentSongs.listSongs;
 
-public class ServiceMusic extends Service {
+public class ServiceMusic extends Service{
 
     public static final int ACTION_PAUSE = 1;
     public static final int ACTION_PLAY = 2;
@@ -47,22 +49,30 @@ public class ServiceMusic extends Service {
     public static final int ACTION_REPEAT_ALL = 8;
     public static final int ACTION_SHUFFE = 9;
 
+    public static final String ACTION_PAUSE_MUSIC = " com.example.mymusic.ACTION_PAUSE_MUSIC";
+
     private boolean checkPlaying = false;
     private boolean checkShuffe = false;
     private String checkRepeat = "no repeat";
 
-    static List<ObjectSong> listSongService;
+//    static List<ObjectSong> listSongService = listSongs;
+
+    private ArrayList<ObjectSong> listSongService = new ArrayList<>();
     private int position;
     private MediaPlayer mediaPlayer;
     private Uri uri;
 
 
-
     @Override
     public void onCreate() {
         super.onCreate();
+
+//        createMedia();
+//        startMedia();
+
         Log.wtf("Service", "On create");
     }
+
 
     @Nullable
     @Override
@@ -74,10 +84,9 @@ public class ServiceMusic extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
 
-        listSongService = listSongs;
-
+        listSongService = intent.getParcelableArrayListExtra("list_from_fragmentSong");
         position = intent.getIntExtra("position", 0);
-        Log.wtf("Service", String.valueOf(position));
+        Log.wtf("Service - position", String.valueOf(position));
 
         if (mediaPlayer != null){
             stopMedia();
@@ -92,8 +101,11 @@ public class ServiceMusic extends Service {
             setAutoNext();
         }
 
-        int actionMusic = intent.getIntExtra("action_service", 0);
-        getActionMusic(actionMusic);
+        int actionMusic_from_fragmentSong = intent.getIntExtra("action_service_from_fragmentSong", 0);
+        getActionMusic(actionMusic_from_fragmentSong);
+
+//        int actionMusic_from_playMusic = intent.getIntExtra("action_service_from_playMusic", 0);
+//        getActionMusic(actionMusic_from_playMusic);
 
 
         return START_STICKY;
@@ -114,12 +126,13 @@ public class ServiceMusic extends Service {
                 playMusic();
                 break;
             case ACTION_CLOSE:
-                stopSelf();
                 sendActionToFragmentSong(ACTION_CLOSE);
                 sendActionToActivityPlayMusic(ACTION_CLOSE);
+                stopSelf();
                 break;
             case ACTION_NEXT:
                 nextMusic();
+                sendNotification();
                 break;
             case ACTION_PREVIEW:
                 previewMusic();
@@ -339,7 +352,7 @@ public class ServiceMusic extends Service {
     private void sendActionToFragmentSong(int action){
         Intent intent = new Intent("send_data_to_fragmentSong");
         intent.putExtra("position", position);
-        intent.putExtra("action", action);
+        intent.putExtra("action_to_fragmentSong", action);
         intent.putExtra("check_play", checkPlaying);
 
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
@@ -348,7 +361,7 @@ public class ServiceMusic extends Service {
     private void sendActionToActivityPlayMusic(int action){
         Intent intent = new Intent("send_data_to_activity_play_music");
         intent.putExtra("position", position);
-        intent.putExtra("action", action);
+        intent.putExtra("action_to_playMusic", action);
         intent.putExtra("check_play", checkPlaying);
 
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);

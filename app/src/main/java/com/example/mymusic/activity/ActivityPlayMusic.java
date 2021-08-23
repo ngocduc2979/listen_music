@@ -28,6 +28,7 @@ import com.example.mymusic.R;
 import com.example.mymusic.service_music.ServiceMusic;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -39,7 +40,8 @@ public class ActivityPlayMusic extends AppCompatActivity {
     private ObjectSong songs;
     private MediaPlayer mediaPlayer;
     private int position;
-    private static List<ObjectSong> listSong;
+//    private static List<ObjectSong> listSong;
+    private ArrayList<ObjectSong> listSong = new ArrayList<>();
     private Uri uri;
     private Thread updateSeekbar;
     private Handler handler = new Handler();
@@ -67,7 +69,7 @@ public class ActivityPlayMusic extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             position = intent.getIntExtra("position", 0);
             checkPlay = intent.getBooleanExtra("check_play", true);
-            int action = intent.getIntExtra("action", 0);
+            int action = intent.getIntExtra("action_to_playMusic", 0);
 
             setLayoutPlayMusic(action);
         }
@@ -82,7 +84,8 @@ public class ActivityPlayMusic extends AppCompatActivity {
 
         init();
 
-        listSong = listSongs;
+        listSong = getIntent().getParcelableArrayListExtra("list_from_fragmentSong_to_playMusic");
+//        listSong = listSongs;
 
         position = getIntent().getIntExtra("position", 0);
 
@@ -432,7 +435,7 @@ public class ActivityPlayMusic extends AppCompatActivity {
 
     private void sendActionToService(int action){
         Intent intent = new Intent(this, ServiceMusic.class);
-        intent.putExtra("action_service", action);
+        intent.putExtra("action_service_from_playMusic", action);
         startService(intent);
     }
 }

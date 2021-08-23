@@ -17,6 +17,8 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -45,7 +47,7 @@ import java.util.List;
 public class FragmentSongs extends Fragment implements OnMusicListener {
 
     private RecyclerView recyclerView;
-    public static List<ObjectSong> listSongs = new ArrayList<>();
+    public static ArrayList<ObjectSong> listSongs = new ArrayList<>();
     private AdapterSongs songsAdapter;
     LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
 
@@ -65,7 +67,7 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
         public void onReceive(Context context, Intent intent) {
             position = intent.getIntExtra("position", 0);
             checkPlay = intent.getBooleanExtra("check_play", true);
-            int action = intent.getIntExtra("action", 0);
+            int action = intent.getIntExtra("action_to_fragmentSong", 0);
 
             setLayoutPlayMusic(action);
         }
@@ -125,6 +127,7 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
         String selection = MediaStore.Audio.Media.IS_MUSIC;
         Cursor cursor = getActivity().getContentResolver().query(uri, null, selection, null, null);
 
+
         if (cursor != null) {
             while (cursor.moveToNext()) {
                 String url = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
@@ -142,6 +145,7 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
         PermissionListener permissionlistener = new PermissionListener() {
             @Override
             public void onPermissionGranted() {
+                loadSong();
                 Toast.makeText(getContext(), "Permission Granted", Toast.LENGTH_SHORT).show();
             }
 
@@ -150,6 +154,7 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
                 Toast.makeText(getContext(), "Permission Denied\n" + deniedPermissions.toString(), Toast.LENGTH_SHORT).show();
             }
         };
+
         TedPermission.with(getContext())
                 .setPermissionListener(permissionlistener)
                 .setDeniedMessage("If you reject permission,you can not use this service\n\nPlease turn on permissions at [Setting] > [Permission]")
@@ -181,6 +186,7 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
         getActivity().startService(intentService);
 
         Intent intent = new Intent(getContext(), ActivityPlayMusic.class);
+        intent.putParcelableArrayListExtra("list_from_fragmentSong_to_playMusic", listSongs);
         intent.putExtra("position", position);
         startActivity(intent);
     }
@@ -264,7 +270,9 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
 
     private void sendActionToService(int action){
         Intent intent = new Intent(getContext(), ServiceMusic.class);
-        intent.putExtra("action_service", action);
+        intent.setAction(ServiceMusic.ACTION_PAUSE_MUSIC);
+        intent.putParcelableArrayListExtra("list_from_fragmentSong", listSongs);
+        intent.putExtra("action_service_from_fragmentSong", action);
         getActivity().startService(intent);
     }
 }
