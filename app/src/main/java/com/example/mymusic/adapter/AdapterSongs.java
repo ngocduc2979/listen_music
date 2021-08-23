@@ -15,7 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.mymusic.ObjectSong;
+import com.example.mymusic.datamodel.Song;
 import com.example.mymusic.OnMusicListener;
 import com.example.mymusic.R;
 
@@ -24,7 +24,7 @@ import java.util.List;
 public class AdapterSongs extends RecyclerView.Adapter<AdapterSongs.MusicViewHolder> {
     private final String TAG = getClass().getSimpleName();
 
-    private List<ObjectSong> listMusic;
+    private List<Song> listMusic;
     private Context context;
     private OnMusicListener onMusicListener;
 
@@ -32,7 +32,7 @@ public class AdapterSongs extends RecyclerView.Adapter<AdapterSongs.MusicViewHol
         this.onMusicListener = onMusicListener;
     }
 
-    public AdapterSongs(List<ObjectSong> listMusic, Context context) {
+    public AdapterSongs(List<Song> listMusic, Context context) {
         this.listMusic = listMusic;
         this.context = context;
     }
@@ -47,7 +47,7 @@ public class AdapterSongs extends RecyclerView.Adapter<AdapterSongs.MusicViewHol
 
     @Override
     public void onBindViewHolder(@NonNull AdapterSongs.MusicViewHolder holder, int position) {
-        ObjectSong song = listMusic.get(position);
+        Song song = listMusic.get(position);
 
         holder.tvSongName.setText(song.getSongName());
         holder.tvSongName.setEllipsize(TextUtils.TruncateAt.MARQUEE);

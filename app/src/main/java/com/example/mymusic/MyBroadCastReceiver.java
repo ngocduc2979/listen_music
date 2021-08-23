@@ -1,12 +1,11 @@
 package com.example.mymusic;
 
-import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-import com.example.mymusic.service_music.ServiceMusic;
+import com.example.mymusic.service_music.PlayerService;
 
 public class MyBroadCastReceiver extends BroadcastReceiver {
     @Override
@@ -15,7 +14,7 @@ public class MyBroadCastReceiver extends BroadcastReceiver {
         int actionMusic = intent.getIntExtra("action_music", 0);
         Log.wtf("BroadCast", "get Action");
 
-        Intent intentService = new Intent(context, ServiceMusic.class);
+        Intent intentService = new Intent(context, PlayerService.class);
         intentService.putExtra("action_service", actionMusic);
         context.startService(intentService);
     }

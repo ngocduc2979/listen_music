@@ -1,21 +1,19 @@
 package com.example.mymusic.service_music;
 
-import android.app.Application;
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Handler;
 import android.os.IBinder;
-import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
-import android.widget.ImageButton;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
@@ -23,19 +21,21 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.example.mymusic.DataPlayer;
 import com.example.mymusic.MyBroadCastReceiver;
-import com.example.mymusic.ObjectSong;
+import com.example.mymusic.datamodel.Song;
 import com.example.mymusic.R;
-import com.example.mymusic.activity.ActivityPlayMusic;
 import com.example.mymusic.activity.MainActivity;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 
 import static com.example.mymusic.NotificationChannelClass.CHANNEL_ID;
 import static com.example.mymusic.fragment.FragmentSongs.listSongs;
 
-public class ServiceMusic extends Service {
+public class PlayerService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnBufferingUpdateListener, MediaPlayer.OnCompletionListener {
+    private final String TAG = getClass().getSimpleName();
 
     public static final int ACTION_PAUSE = 1;
     public static final int ACTION_PLAY = 2;
@@ -47,21 +47,69 @@ public class ServiceMusic extends Service {
     public static final int ACTION_REPEAT_ALL = 8;
     public static final int ACTION_SHUFFE = 9;
 
+    public static final String EXTRA_CURRENT_PROGRESS = "current_progress";
+    public static final String EXTRA_DURATION = "duration";
+    public static final String EXTRA_STATE_PLAY = "state_play";
+    public static final String EXTRA_PROGRESS = "progress";
+
+    public static final String ACTION_PLAY_PAUSE_MUSIC = "com.example.mymusic.PLAY";
+    public static final String ACTION_PAUSE_MUSIC = "com.example.mymusic.PAUSE";
+    public static final String ACTION_SEEK = "com.example.mymusic.SEEK";
+    public static final String ACTION_NEXT_SONG = "com.example.mymusic.NEXT";
+    public static final String ACTION_PREVIOUS_SONG = "com.example.mymusic.PREVIOUS";
+    public static final String ACTION_CLOSE_PLAYER = "com.example.mymusic.CLOSE";
+    public static final String ACTION_UPDATE_SONG_INFO = "com.example.mymusic.UPDATE_SONG_INFO";
+    public static final String ACTION_UPDATE_STATE_PLAY = "com.example.mymusic.UPDATE_STATE_PLAY";
+    public static final String ACTION_UPDATE_PROGRESS_SONG = "com.example.mymusic.UPDATE_PROGRESS";
+
+    private boolean isPlaying = false;
+    private int durationCurSong = 0;
+
+    private final Handler updateProgressHandler = new Handler();
+    private final Runnable updateProgress = new Runnable() {
+        @Override
+        public void run() {
+            int cur = mediaPlayer.getCurrentPosition();
+
+            sendBroadcastUpdateProgress(cur, durationCurSong);
+
+            updateProgressHandler.postDelayed(this, 1000L);
+        }
+    };
+
+    private void sendBroadcastUpdateProgress(int cur, int duration) {
+        Intent intent = new Intent(ACTION_UPDATE_PROGRESS_SONG);
+        intent.putExtra(EXTRA_DURATION, duration);
+        intent.putExtra(EXTRA_CURRENT_PROGRESS, cur);
+
+        sendBroadcast(intent);
+    }
+
+    private void sendBroadcastUpdateStatePlay() {
+        Intent intent = new Intent(ACTION_UPDATE_STATE_PLAY);
+        intent.putExtra(EXTRA_STATE_PLAY, mediaPlayer.isPlaying());
+
+        sendBroadcast(intent);
+    }
+
     private boolean checkPlaying = false;
     private boolean checkShuffe = false;
     private String checkRepeat = "no repeat";
 
-    static List<ObjectSong> listSongService;
+    static List<Song> listSongService;
     private int position;
     private MediaPlayer mediaPlayer;
     private Uri uri;
 
 
 
+
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.wtf("Service", "On create");
+
+        initPlayer();
+        Log.wtf(TAG, "On create");
     }
 
     @Nullable
@@ -74,7 +122,19 @@ public class ServiceMusic extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
 
-        listSongService = listSongs;
+        String action = intent.getAction();
+
+        if (action.equals(ACTION_PLAY_PAUSE_MUSIC)) {
+            play();
+        } else if (action.equals(ACTION_PAUSE_MUSIC)) {
+            pause();
+        } else if (action.equals(ACTION_SEEK)) {
+            int progress = intent.getIntExtra(EXTRA_PROGRESS, 0);
+
+            seekTo(progress);
+        }
+
+        /*listSongService = listSongs;
 
         position = intent.getIntExtra("position", 0);
         Log.wtf("Service", String.valueOf(position));
@@ -93,7 +153,7 @@ public class ServiceMusic extends Service {
         }
 
         int actionMusic = intent.getIntExtra("action_service", 0);
-        getActionMusic(actionMusic);
+        getActionMusic(actionMusic);*/
 
 
         return START_STICKY;
@@ -101,8 +161,90 @@ public class ServiceMusic extends Service {
 
     @Override
     public void onDestroy() {
+        mediaPlayer.release();
+        updateProgressHandler.removeCallbacks(updateProgress);
+
         super.onDestroy();
-        stopMedia();
+    }
+
+    private void initPlayer() {
+        mediaPlayer = new MediaPlayer();
+        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        mediaPlayer.setOnPreparedListener(this);
+        mediaPlayer.setOnBufferingUpdateListener(this);
+        mediaPlayer.setOnCompletionListener(this);
+    }
+
+    @Override
+    public void onPrepared(MediaPlayer mp) {
+        mediaPlayer.start();
+
+        isPlaying = true;
+        durationCurSong = mp.getDuration();
+        updateProgressHandler.post(updateProgress);
+        sendBroadcastUpdateStatePlay();
+    }
+
+    @Override
+    public void onBufferingUpdate(MediaPlayer mp, int percent) {
+
+    }
+
+    @Override
+    public void onCompletion(MediaPlayer mp) {
+        // goi khi het bai hat
+    }
+
+    private void play() {
+        Log.wtf(TAG, "play");
+
+        if (isPlaying) {
+            if (mediaPlayer.isPlaying()) {
+                pause();
+            } else {
+                mediaPlayer.start();
+            }
+
+            sendBroadcastUpdateStatePlay();
+        } else {
+            Song curSong = DataPlayer.getInstance().getCurrentSong();
+
+            startNewSong(curSong);
+        }
+    }
+
+    private void startNewSong(Song song) {
+        Log.wtf(TAG, "startNewSong");
+
+        try {
+            isPlaying = false;
+
+            mediaPlayer.setDataSource(this, Uri.parse(song.getUrlSong()));
+            mediaPlayer.prepareAsync();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void pause() {
+        Log.wtf(TAG, "pause");
+        mediaPlayer.pause();
+    }
+
+    private void next() {
+
+    }
+
+    private void previous() {
+
+    }
+
+    private void seekTo(int progress) {
+        if (progress > 0) {
+            int seekTo = (progress * durationCurSong) / 100;
+
+            mediaPlayer.seekTo(seekTo);
+        }
     }
 
     private void getActionMusic(int action){

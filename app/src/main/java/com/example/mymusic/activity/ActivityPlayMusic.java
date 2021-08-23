@@ -16,16 +16,15 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.bumptech.glide.Glide;
-import com.example.mymusic.ObjectSong;
+import com.example.mymusic.datamodel.Song;
 import com.example.mymusic.R;
-import com.example.mymusic.service_music.ServiceMusic;
+import com.example.mymusic.service_music.PlayerService;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -36,10 +35,10 @@ import static com.example.mymusic.fragment.FragmentSongs.listSongs;
 public class ActivityPlayMusic extends AppCompatActivity {
 
     public static final String EXTRA_MUSIC = "MUSIC";
-    private ObjectSong songs;
+    private Song songs;
     private MediaPlayer mediaPlayer;
     private int position;
-    private static List<ObjectSong> listSong;
+    private static List<Song> listSong;
     private Uri uri;
     private Thread updateSeekbar;
     private Handler handler = new Handler();
@@ -348,21 +347,21 @@ public class ActivityPlayMusic extends AppCompatActivity {
 
     private void setLayoutPlayMusic(int action){
         switch (action){
-            case ServiceMusic.ACTION_START:
+            case PlayerService.ACTION_START:
                 setInfoSong();
                 checkPlaying();
                 break;
-            case ServiceMusic.ACTION_PLAY:
+            case PlayerService.ACTION_PLAY:
                 checkPlaying();
                 break;
-            case ServiceMusic.ACTION_PAUSE:
+            case PlayerService.ACTION_PAUSE:
                 checkPlaying();
                 break;
-            case ServiceMusic.ACTION_NEXT:
+            case PlayerService.ACTION_NEXT:
                 break;
-            case ServiceMusic.ACTION_PREVIEW:
+            case PlayerService.ACTION_PREVIEW:
                 break;
-            case ServiceMusic.ACTION_CLOSE:
+            case PlayerService.ACTION_CLOSE:
                 break;
         }
     }
@@ -392,14 +391,14 @@ public class ActivityPlayMusic extends AppCompatActivity {
         imbBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendActionToService(ServiceMusic.ACTION_PREVIEW);
+                sendActionToService(PlayerService.ACTION_PREVIEW);
             }
         });
 
         imbForward.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendActionToService(ServiceMusic.ACTION_NEXT);
+                sendActionToService(PlayerService.ACTION_NEXT);
             }
         });
 
@@ -407,7 +406,7 @@ public class ActivityPlayMusic extends AppCompatActivity {
             imbPlay.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    sendActionToService(ServiceMusic.ACTION_PAUSE);
+                    sendActionToService(PlayerService.ACTION_PAUSE);
                     Log.wtf("PlayMusic", "click play");
                 }
             });
@@ -415,7 +414,7 @@ public class ActivityPlayMusic extends AppCompatActivity {
             imbPlay.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    sendActionToService(ServiceMusic.ACTION_PLAY);
+                    sendActionToService(PlayerService.ACTION_PLAY);
                     Log.wtf("PlayMusic", "click pause");
                 }
             });
@@ -431,7 +430,7 @@ public class ActivityPlayMusic extends AppCompatActivity {
     }
 
     private void sendActionToService(int action){
-        Intent intent = new Intent(this, ServiceMusic.class);
+        Intent intent = new Intent(this, PlayerService.class);
         intent.putExtra("action_service", action);
         startService(intent);
     }

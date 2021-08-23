@@ -14,7 +14,7 @@ import android.view.ViewGroup;
 
 import com.example.mymusic.activity.ActivityArtistSong;
 import com.example.mymusic.adapter.AdapterArtist;
-import com.example.mymusic.ObjectSong;
+import com.example.mymusic.datamodel.Song;
 import com.example.mymusic.OnAtistListener;
 import com.example.mymusic.R;
 
@@ -29,8 +29,8 @@ public class FragmentArtist extends Fragment implements OnAtistListener {
     private RecyclerView recyclerView;
     private GridLayoutManager gridLayoutManager;
     private AdapterArtist artistAdapter;
-    public static List<ObjectSong> listSongsArtist = new ArrayList<>();
-    static List<ObjectSong> list = new ArrayList<>();
+    public static List<Song> listSongsArtist = new ArrayList<>();
+    static List<Song> list = new ArrayList<>();
 
     boolean checkArtist;
 
