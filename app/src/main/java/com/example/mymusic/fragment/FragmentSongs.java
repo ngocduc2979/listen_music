@@ -127,7 +127,9 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
                 String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
                 String duration = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION));
 
-                listSongs.add(new Song(songName, singerName, url, album, duration));
+                if (!url.endsWith(".amr")) {
+                    listSongs.add(new Song(songName, singerName, url, album, duration));
+                }
             }
         }
     }

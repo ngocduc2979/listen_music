@@ -77,6 +77,8 @@ public class PlayerActivity extends AppCompatActivity {
                 boolean isPlaying = intent.getBooleanExtra(PlayerService.EXTRA_STATE_PLAY, false);
 
                 imbPlay.setImageResource(isPlaying ? R.drawable.pause : R.drawable.play);
+            } else if (action.equals(PlayerService.ACTION_UPDATE_SONG_INFO)) {
+                showSongInfo(DataPlayer.getInstance().getCurrentSong());
             }
         }
     };
@@ -110,8 +112,6 @@ public class PlayerActivity extends AppCompatActivity {
         play();
 
         clickNext();
-
-        setData();
     }
 
     @Override
@@ -127,6 +127,7 @@ public class PlayerActivity extends AppCompatActivity {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(PlayerService.ACTION_UPDATE_PROGRESS_SONG);
         intentFilter.addAction(PlayerService.ACTION_UPDATE_STATE_PLAY);
+        intentFilter.addAction(PlayerService.ACTION_UPDATE_SONG_INFO);
 
         registerReceiver(playerBroadcast, intentFilter);
     }
@@ -174,7 +175,7 @@ public class PlayerActivity extends AppCompatActivity {
         imbBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                privious();
+                previous();
             }
         });
 
@@ -214,11 +215,11 @@ public class PlayerActivity extends AppCompatActivity {
         });
     }
 
-    private void setData(){
-        tvSongName.setText(playlist.get(curPosition).getSongName());
-        tvSinggerName.setText(playlist.get(curPosition).getArtistName());
+    private void showSongInfo(Song song) {
+        tvSongName.setText(song.getSongName());
+        tvSinggerName.setText(song.getArtistName());
 
-        byte[] albumArt = getAlbumArt(playlist.get(curPosition).getUrlSong());
+        byte[] albumArt = getAlbumArt(song.getUrlSong());
 
         Glide.with(this)
                 .load(albumArt)
@@ -243,7 +244,7 @@ public class PlayerActivity extends AppCompatActivity {
         Log.wtf("Player", "play");
 
         Intent intent = new Intent(this, PlayerService.class);
-        intent.setAction(PlayerService.ACTION_PLAY_PAUSE_MUSIC);
+        intent.setAction(PlayerService.ACTION_NEW_PLAY);
         startService(intent);
     }
 
@@ -253,7 +254,7 @@ public class PlayerActivity extends AppCompatActivity {
         startService(intent);
     }
 
-    private void privious(){
+    private void previous(){
         Intent intent = new Intent(this, PlayerService.class);
         intent.setAction(PlayerService.ACTION_PREVIOUS_SONG);
         startService(intent);

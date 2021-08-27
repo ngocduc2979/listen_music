@@ -39,7 +39,9 @@ public class DataPlayer {
     }
 
     public Song getNextSong() {
-        return playlist.get(playPosition + 1);
+        playPosition++;
+
+        return playlist.get(playPosition);
     }
 
     public boolean hasPreviousSong() {
@@ -47,6 +49,8 @@ public class DataPlayer {
     }
 
     public Song getPreviousSong() {
-        return playlist.get(playPosition - 1);
+        playPosition--;
+
+        return playlist.get(playPosition);
     }
 }

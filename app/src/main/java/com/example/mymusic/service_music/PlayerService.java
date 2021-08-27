@@ -61,6 +61,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     public static final String EXTRA_STATE_PLAY = "state_play";
     public static final String EXTRA_PROGRESS = "progress";
 
+    public static final String ACTION_NEW_PLAY = "com.example.mymusic.NEW_PLAY";
     public static final String ACTION_PLAY_PAUSE_MUSIC = "com.example.mymusic.PLAY";
     public static final String ACTION_PAUSE_MUSIC = "com.example.mymusic.PAUSE";
     public static final String ACTION_SEEK = "com.example.mymusic.SEEK";
@@ -138,7 +139,9 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
 
         String action = intent.getAction();
 
-        if (action.equals(ACTION_PLAY_PAUSE_MUSIC)) {
+        if (action.equals(ACTION_NEW_PLAY)) {
+            newPlay();
+        } else if (action.equals(ACTION_PLAY_PAUSE_MUSIC)) {
             play();
         } else if (action.equals(ACTION_PAUSE_MUSIC)) {
             pause();
@@ -213,6 +216,8 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
         // goi khi het bai hat
     }
 
+
+
     private void play() {
         Log.wtf(TAG, "play");
 
@@ -225,20 +230,31 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
 
             sendBroadcastUpdateStatePlay();
         } else {
-            Song curSong = DataPlayer.getInstance().getCurrentSong();
-
-            startNewSong(curSong);
+            newPlay();
         }
     }
 
+    private void newPlay() {
+        Song curSong = DataPlayer.getInstance().getCurrentSong();
+
+        startNewSong(curSong);
+    }
+
+    private void requestUpdateUISongInfo() {
+        Intent intent = new Intent(ACTION_UPDATE_SONG_INFO);
+        sendBroadcast(intent);
+    }
+
     private void startNewSong(Song song) {
-        Log.wtf(TAG, "startNewSong");
+        Log.wtf(TAG, "startNewSong " + song.getSongName() + " " + song.getUrlSong());
 
         try {
             isPlaying = false;
-
+            mediaPlayer.reset();
             mediaPlayer.setDataSource(this, Uri.parse(song.getUrlSong()));
             mediaPlayer.prepareAsync();
+
+            requestUpdateUISongInfo();
         } catch (IOException e) {
             e.printStackTrace();
         }
