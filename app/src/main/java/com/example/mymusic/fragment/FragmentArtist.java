@@ -17,7 +17,7 @@ import android.view.ViewGroup;
 
 import com.example.mymusic.activity.ActivityArtistSong;
 import com.example.mymusic.adapter.AdapterArtist;
-import com.example.mymusic.ObjectSong;
+import com.example.mymusic.datamodel.Song;
 import com.example.mymusic.OnAtistListener;
 import com.example.mymusic.R;
 
@@ -32,8 +32,8 @@ public class FragmentArtist extends Fragment implements OnAtistListener {
     private RecyclerView recyclerView;
     private GridLayoutManager gridLayoutManager;
     private AdapterArtist artistAdapter;
-    public static List<ObjectSong> listSongsArtist = new ArrayList<>();
-    static List<ObjectSong> list = new ArrayList<>();
+    public static List<Song> listSongsArtist = new ArrayList<>();
+    static List<Song> list = new ArrayList<>();
 
     boolean checkArtist;
 
@@ -108,7 +108,7 @@ public class FragmentArtist extends Fragment implements OnAtistListener {
                 String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
                 String duration = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION));
 
-                list.add(new ObjectSong(songName, singerName, url, album, duration));
+                list.add(new Song(songName, singerName, url, album, duration));
             }
         }
     }

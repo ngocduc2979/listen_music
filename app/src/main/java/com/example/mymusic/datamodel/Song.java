@@ -1,9 +1,9 @@
-package com.example.mymusic;
+package com.example.mymusic.datamodel;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
-public class ObjectSong implements Parcelable {
+public class Song implements Parcelable {
 
     private String songName;
     private String artistName;
@@ -11,20 +11,12 @@ public class ObjectSong implements Parcelable {
     private String album;
     private String duration;
 
-    public ObjectSong(String songName, String artistName, String urlSong, String album, String duration) {
+    public Song(String songName, String artistName, String urlSong, String album, String duration) {
         this.songName = songName;
         this.artistName = artistName;
         this.urlSong = urlSong;
         this.album = album;
         this.duration = duration;
-    }
-
-    public ObjectSong(Parcel input) {
-        songName = input.readString();
-        artistName = input.readString();
-        urlSong = input.readString();
-        album = input.readString();
-        duration = input.readString();
     }
 
     public String getSongName() {
@@ -67,16 +59,6 @@ public class ObjectSong implements Parcelable {
         this.duration = duration;
     }
 
-    public static final Parcelable.Creator CREATOR = new Parcelable.Creator() {
-        public ObjectSong createFromParcel(Parcel input) {
-            return new ObjectSong(input);
-        }
-        public ObjectSong[] newArray(int size) {
-            return new ObjectSong[size];
-        }
-    };
-
-
     @Override
     public int describeContents() {
         return 0;
@@ -84,10 +66,38 @@ public class ObjectSong implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(songName);
-        dest.writeString(artistName);
-        dest.writeString(urlSong);
-        dest.writeString(album);
-        dest.writeString(duration);
+        dest.writeString(this.songName);
+        dest.writeString(this.artistName);
+        dest.writeString(this.urlSong);
+        dest.writeString(this.album);
+        dest.writeString(this.duration);
     }
+
+    public void readFromParcel(Parcel source) {
+        this.songName = source.readString();
+        this.artistName = source.readString();
+        this.urlSong = source.readString();
+        this.album = source.readString();
+        this.duration = source.readString();
+    }
+
+    protected Song(Parcel in) {
+        this.songName = in.readString();
+        this.artistName = in.readString();
+        this.urlSong = in.readString();
+        this.album = in.readString();
+        this.duration = in.readString();
+    }
+
+    public static final Parcelable.Creator<Song> CREATOR = new Parcelable.Creator<Song>() {
+        @Override
+        public Song createFromParcel(Parcel source) {
+            return new Song(source);
+        }
+
+        @Override
+        public Song[] newArray(int size) {
+            return new Song[size];
+        }
+    };
 }

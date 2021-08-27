@@ -13,18 +13,17 @@ import android.widget.TextView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.mymusic.ObjectSong;
-import com.example.mymusic.OnAtistListener;
+import com.example.mymusic.datamodel.Song;
 import com.example.mymusic.R;
 
 import java.util.List;
 
 public class AdapterArtistSong extends RecyclerView.Adapter<AdapterArtistSong.SongViewHolder> {
 
-    private List<ObjectSong> listArtistSong;
+    private List<Song> listArtistSong;
     private Context context;
 
-    public AdapterArtistSong(List<ObjectSong> listArtistSong, Context context) {
+    public AdapterArtistSong(List<Song> listArtistSong, Context context) {
         this.listArtistSong = listArtistSong;
         this.context = context;
     }

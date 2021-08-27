@@ -16,19 +16,17 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.bumptech.glide.Glide;
-import com.example.mymusic.ObjectSong;
+import com.example.mymusic.datamodel.Song;
 import com.example.mymusic.R;
-import com.example.mymusic.service_music.ServiceMusic;
+import com.example.mymusic.service_music.PlayerService;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -37,11 +35,10 @@ import static com.example.mymusic.fragment.FragmentSongs.listSongs;
 public class ActivityPlayMusic extends AppCompatActivity {
 
     public static final String EXTRA_MUSIC = "MUSIC";
-    private ObjectSong songs;
+    private Song songs;
     private MediaPlayer mediaPlayer;
     private int position;
-//    private static List<ObjectSong> listSong;
-    private ArrayList<ObjectSong> listSong = new ArrayList<>();
+    private static List<Song> listSong;
     private Uri uri;
     private Thread updateSeekbar;
     private Handler handler = new Handler();
@@ -69,7 +66,7 @@ public class ActivityPlayMusic extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             position = intent.getIntExtra("position", 0);
             checkPlay = intent.getBooleanExtra("check_play", true);
-            int action = intent.getIntExtra("action_to_playMusic", 0);
+            int action = intent.getIntExtra("action", 0);
 
             setLayoutPlayMusic(action);
         }
@@ -84,8 +81,7 @@ public class ActivityPlayMusic extends AppCompatActivity {
 
         init();
 
-        listSong = getIntent().getParcelableArrayListExtra("list_from_fragmentSong_to_playMusic");
-//        listSong = listSongs;
+        listSong = listSongs;
 
         position = getIntent().getIntExtra("position", 0);
 
@@ -351,21 +347,21 @@ public class ActivityPlayMusic extends AppCompatActivity {
 
     private void setLayoutPlayMusic(int action){
         switch (action){
-            case ServiceMusic.ACTION_START:
+            case PlayerService.ACTION_START:
                 setInfoSong();
                 checkPlaying();
                 break;
-            case ServiceMusic.ACTION_PLAY:
+            case PlayerService.ACTION_PLAY:
                 checkPlaying();
                 break;
-            case ServiceMusic.ACTION_PAUSE:
+            case PlayerService.ACTION_PAUSE:
                 checkPlaying();
                 break;
-            case ServiceMusic.ACTION_NEXT:
+            case PlayerService.ACTION_NEXT:
                 break;
-            case ServiceMusic.ACTION_PREVIEW:
+            case PlayerService.ACTION_PREVIEW:
                 break;
-            case ServiceMusic.ACTION_CLOSE:
+            case PlayerService.ACTION_CLOSE:
                 break;
         }
     }
@@ -395,14 +391,14 @@ public class ActivityPlayMusic extends AppCompatActivity {
         imbBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendActionToService(ServiceMusic.ACTION_PREVIEW);
+                sendActionToService(PlayerService.ACTION_PREVIEW);
             }
         });
 
         imbForward.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendActionToService(ServiceMusic.ACTION_NEXT);
+                sendActionToService(PlayerService.ACTION_NEXT);
             }
         });
 
@@ -410,7 +406,7 @@ public class ActivityPlayMusic extends AppCompatActivity {
             imbPlay.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    sendActionToService(ServiceMusic.ACTION_PAUSE);
+                    sendActionToService(PlayerService.ACTION_PAUSE);
                     Log.wtf("PlayMusic", "click play");
                 }
             });
@@ -418,7 +414,7 @@ public class ActivityPlayMusic extends AppCompatActivity {
             imbPlay.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    sendActionToService(ServiceMusic.ACTION_PLAY);
+                    sendActionToService(PlayerService.ACTION_PLAY);
                     Log.wtf("PlayMusic", "click pause");
                 }
             });
@@ -434,8 +430,8 @@ public class ActivityPlayMusic extends AppCompatActivity {
     }
 
     private void sendActionToService(int action){
-        Intent intent = new Intent(this, ServiceMusic.class);
-        intent.putExtra("action_service_from_playMusic", action);
+        Intent intent = new Intent(this, PlayerService.class);
+        intent.putExtra("action_service", action);
         startService(intent);
     }
 }

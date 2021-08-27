@@ -17,8 +17,6 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -32,12 +30,12 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.mymusic.activity.ActivityPlayMusic;
-import com.example.mymusic.activity.MainActivity;
 import com.example.mymusic.adapter.AdapterSongs;
-import com.example.mymusic.ObjectSong;
+import com.example.mymusic.datamodel.Song;
 import com.example.mymusic.OnMusicListener;
 import com.example.mymusic.R;
-import com.example.mymusic.service_music.ServiceMusic;
+import com.example.mymusic.service_music.PlayerService;
+import com.example.mymusic.activity.PlayerActivity;
 import com.gun0912.tedpermission.PermissionListener;
 import com.gun0912.tedpermission.TedPermission;
 
@@ -47,7 +45,7 @@ import java.util.List;
 public class FragmentSongs extends Fragment implements OnMusicListener {
 
     private RecyclerView recyclerView;
-    public static ArrayList<ObjectSong> listSongs = new ArrayList<>();
+    public static List<Song> listSongs = new ArrayList<>();
     private AdapterSongs songsAdapter;
     LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
 
@@ -67,7 +65,7 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
         public void onReceive(Context context, Intent intent) {
             position = intent.getIntExtra("position", 0);
             checkPlay = intent.getBooleanExtra("check_play", true);
-            int action = intent.getIntExtra("action_to_fragmentSong", 0);
+            int action = intent.getIntExtra("action", 0);
 
             setLayoutPlayMusic(action);
         }
@@ -75,15 +73,9 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-
-        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            Log.wtf("SongFragment", "permission");
-            requestPermission();
-        }
+        loadSong();
 
         LocalBroadcastManager.getInstance(getContext()).registerReceiver(broadcastReceiver, new IntentFilter("send_data_to_fragmentSong"));
-
-        loadSong();
 
         Log.wtf("SongFragment", "onCreate");
 
@@ -127,7 +119,6 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
         String selection = MediaStore.Audio.Media.IS_MUSIC;
         Cursor cursor = getActivity().getContentResolver().query(uri, null, selection, null, null);
 
-
         if (cursor != null) {
             while (cursor.moveToNext()) {
                 String url = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
@@ -136,30 +127,9 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
                 String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
                 String duration = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION));
 
-                listSongs.add(new ObjectSong(songName, singerName, url, album, duration));
+                listSongs.add(new Song(songName, singerName, url, album, duration));
             }
         }
-    }
-
-    private void requestPermission() {
-        PermissionListener permissionlistener = new PermissionListener() {
-            @Override
-            public void onPermissionGranted() {
-                loadSong();
-                Toast.makeText(getContext(), "Permission Granted", Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onPermissionDenied(List<String> deniedPermissions) {
-                Toast.makeText(getContext(), "Permission Denied\n" + deniedPermissions.toString(), Toast.LENGTH_SHORT).show();
-            }
-        };
-
-        TedPermission.with(getContext())
-                .setPermissionListener(permissionlistener)
-                .setDeniedMessage("If you reject permission,you can not use this service\n\nPlease turn on permissions at [Setting] > [Permission]")
-                .setPermissions(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                .check();
     }
 
     private void initView(View view){
@@ -181,34 +151,36 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
 
     @Override
     public void onMusic(int position) {
-        Intent intentService = new Intent(getContext(), ServiceMusic.class);
+        /*Intent intentService = new Intent(getContext(), PlayerService.class);
         intentService.putExtra("position", position);
         getActivity().startService(intentService);
 
         Intent intent = new Intent(getContext(), ActivityPlayMusic.class);
-        intent.putParcelableArrayListExtra("list_from_fragmentSong_to_playMusic", listSongs);
         intent.putExtra("position", position);
-        startActivity(intent);
+        startActivity(intent);*/
+
+        PlayerActivity.launch(getContext(), listSongs, position);
+//        PlayerService.launch(getContext(), listSongs, position);
     }
 
     private void setLayoutPlayMusic(int action){
         switch (action){
-            case ServiceMusic.ACTION_START:
+            case PlayerService.ACTION_START:
                 layoutPlayMusic.setVisibility(View.VISIBLE);
                 setInfoSong();
                 checkPlaying();
                 break;
-            case ServiceMusic.ACTION_PLAY:
+            case PlayerService.ACTION_PLAY:
                 checkPlaying();
                 break;
-            case ServiceMusic.ACTION_PAUSE:
+            case PlayerService.ACTION_PAUSE:
                 checkPlaying();
                 break;
-            case ServiceMusic.ACTION_NEXT:
+            case PlayerService.ACTION_NEXT:
                 break;
-            case ServiceMusic.ACTION_PREVIEW:
+            case PlayerService.ACTION_PREVIEW:
                 break;
-            case ServiceMusic.ACTION_CLOSE:
+            case PlayerService.ACTION_CLOSE:
                 layoutPlayMusic.setVisibility(View.GONE);
                 break;
         }
@@ -238,9 +210,9 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
             @Override
             public void onClick(View v) {
                 if (checkPlay){
-                    sendActionToService(ServiceMusic.ACTION_PAUSE);
+                    sendActionToService(PlayerService.ACTION_PAUSE);
                 } else {
-                    sendActionToService(ServiceMusic.ACTION_PLAY);
+                    sendActionToService(PlayerService.ACTION_PLAY);
                 }
             }
         });
@@ -248,14 +220,14 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
         imbNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendActionToService(ServiceMusic.ACTION_NEXT);
+                sendActionToService(PlayerService.ACTION_NEXT);
             }
         });
 
         imbBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendActionToService(ServiceMusic.ACTION_PREVIEW);
+                sendActionToService(PlayerService.ACTION_PREVIEW);
             }
         });
     }
@@ -269,10 +241,8 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
     }
 
     private void sendActionToService(int action){
-        Intent intent = new Intent(getContext(), ServiceMusic.class);
-        intent.setAction(ServiceMusic.ACTION_PAUSE_MUSIC);
-        intent.putParcelableArrayListExtra("list_from_fragmentSong", listSongs);
-        intent.putExtra("action_service_from_fragmentSong", action);
+        Intent intent = new Intent(getContext(), PlayerService.class);
+        intent.putExtra("action_service", action);
         getActivity().startService(intent);
     }
 }

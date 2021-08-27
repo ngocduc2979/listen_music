@@ -70,7 +70,8 @@
 
     <ImageButton
         android:id="@+id/play"
-        android:background="@drawable/pause"
+        android:src="@drawable/pause"
+        android:background="@android:color/transparent"
         android:layout_width="56dp"
         android:layout_height="56dp"
         app:layout_constraintBottom_toBottomOf="parent"

@@ -1,18 +1,14 @@
 package com.example.mymusic.activity;
 
-import android.content.Context;
 import android.os.Bundle;
-import android.util.AttributeSet;
 import android.view.View;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.mymusic.ObjectSong;
+import com.example.mymusic.datamodel.Song;
 import com.example.mymusic.R;
 import com.example.mymusic.adapter.AdapterArtistSong;
 
@@ -24,9 +20,9 @@ import static com.example.mymusic.fragment.FragmentSongs.listSongs;
 
 public class ActivityArtistSong extends AppCompatActivity {
 
-    private static List<ObjectSong> listArtist = new ArrayList<>();
-    private static List<ObjectSong> listSong = new ArrayList<>();
-    private static List<ObjectSong> listSongResult = new ArrayList<>();
+    private static List<Song> listArtist = new ArrayList<>();
+    private static List<Song> listSong = new ArrayList<>();
+    private static List<Song> listSongResult = new ArrayList<>();
     private AdapterArtistSong adapterArtistSong;
     private LinearLayoutManager linearLayoutManager;
 

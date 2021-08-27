@@ -1,35 +1,35 @@
 package com.example.mymusic.service_music;
 
-import android.app.Application;
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Handler;
 import android.os.IBinder;
-import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
-import android.widget.ImageButton;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.example.mymusic.DataPlayer;
 import com.example.mymusic.MyBroadCastReceiver;
-import com.example.mymusic.ObjectSong;
-import com.example.mymusic.R;
 import com.example.mymusic.activity.ActivityPlayMusic;
+import com.example.mymusic.activity.PlayerActivity;
+import com.example.mymusic.datamodel.Song;
+import com.example.mymusic.R;
 import com.example.mymusic.activity.MainActivity;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -37,7 +37,8 @@ import java.util.Random;
 import static com.example.mymusic.NotificationChannelClass.CHANNEL_ID;
 import static com.example.mymusic.fragment.FragmentSongs.listSongs;
 
-public class ServiceMusic extends Service{
+public class PlayerService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnBufferingUpdateListener, MediaPlayer.OnCompletionListener {
+    private final String TAG = getClass().getSimpleName();
 
     public static final int ACTION_PAUSE = 1;
     public static final int ACTION_PLAY = 2;
@@ -49,16 +50,70 @@ public class ServiceMusic extends Service{
     public static final int ACTION_REPEAT_ALL = 8;
     public static final int ACTION_SHUFFE = 9;
 
-    public static final String ACTION_PAUSE_MUSIC = " com.example.mymusic.ACTION_PAUSE_MUSIC";
+    private List<Song> playlist;
+    private int curPosition;
+
+    private static final String EXTRA_PLAYLIST = "playlist";
+    private static final String EXTRA_CUR_POSITION = "cur_position";
+
+    public static final String EXTRA_CURRENT_PROGRESS = "current_progress";
+    public static final String EXTRA_DURATION = "duration";
+    public static final String EXTRA_STATE_PLAY = "state_play";
+    public static final String EXTRA_PROGRESS = "progress";
+
+    public static final String ACTION_PLAY_PAUSE_MUSIC = "com.example.mymusic.PLAY";
+    public static final String ACTION_PAUSE_MUSIC = "com.example.mymusic.PAUSE";
+    public static final String ACTION_SEEK = "com.example.mymusic.SEEK";
+    public static final String ACTION_NEXT_SONG = "com.example.mymusic.NEXT";
+    public static final String ACTION_PREVIOUS_SONG = "com.example.mymusic.PREVIOUS";
+    public static final String ACTION_CLOSE_PLAYER = "com.example.mymusic.CLOSE";
+    public static final String ACTION_UPDATE_SONG_INFO = "com.example.mymusic.UPDATE_SONG_INFO";
+    public static final String ACTION_UPDATE_STATE_PLAY = "com.example.mymusic.UPDATE_STATE_PLAY";
+    public static final String ACTION_UPDATE_PROGRESS_SONG = "com.example.mymusic.UPDATE_PROGRESS";
+
+    private boolean isPlaying = false;
+    private int durationCurSong = 0;
+
+//    public static void launch(Context context, List<Song> playlist, int curPosition) {
+//        Intent intent = new Intent(context, PlayerService.class);
+//
+//        intent.putExtra(EXTRA_CUR_POSITION, curPosition);
+//        intent.putParcelableArrayListExtra(EXTRA_PLAYLIST, (ArrayList<Song>) playlist);
+//
+//        context.startService(intent);
+//    }
+
+    private final Handler updateProgressHandler = new Handler();
+    private final Runnable updateProgress = new Runnable() {
+        @Override
+        public void run() {
+            int cur = mediaPlayer.getCurrentPosition();
+
+            sendBroadcastUpdateProgress(cur, durationCurSong);
+
+            updateProgressHandler.postDelayed(this, 1000L);
+        }
+    };
+
+    private void sendBroadcastUpdateProgress(int cur, int duration) {
+        Intent intent = new Intent(ACTION_UPDATE_PROGRESS_SONG);
+        intent.putExtra(EXTRA_DURATION, duration);
+        intent.putExtra(EXTRA_CURRENT_PROGRESS, cur);
+
+        sendBroadcast(intent);
+    }
+
+    private void sendBroadcastUpdateStatePlay() {
+        Intent intent = new Intent(ACTION_UPDATE_STATE_PLAY);
+        intent.putExtra(EXTRA_STATE_PLAY, mediaPlayer.isPlaying());
+
+        sendBroadcast(intent);
+    }
 
     private boolean checkPlaying = false;
     private boolean checkShuffe = false;
     private String checkRepeat = "no repeat";
 
-//    static List<ObjectSong> listSongService = listSongs;
-
-    private ArrayList<ObjectSong> listSongService = new ArrayList<>();
-    private int position;
     private MediaPlayer mediaPlayer;
     private Uri uri;
 
@@ -67,12 +122,9 @@ public class ServiceMusic extends Service{
     public void onCreate() {
         super.onCreate();
 
-//        createMedia();
-//        startMedia();
-
-        Log.wtf("Service", "On create");
+        initPlayer();
+        Log.wtf(TAG, "On create");
     }
-
 
     @Nullable
     @Override
@@ -84,9 +136,25 @@ public class ServiceMusic extends Service{
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
 
-        listSongService = intent.getParcelableArrayListExtra("list_from_fragmentSong");
+        String action = intent.getAction();
+
+        if (action.equals(ACTION_PLAY_PAUSE_MUSIC)) {
+            play();
+        } else if (action.equals(ACTION_PAUSE_MUSIC)) {
+            pause();
+        } else if (action.equals(ACTION_SEEK)) {
+            int progress = intent.getIntExtra(EXTRA_PROGRESS, 0);
+            seekTo(progress);
+        } else if (action.equals(ACTION_NEXT_SONG)){
+            next();
+        } else if (action.equals(ACTION_PREVIOUS_SONG)){
+            previous();
+        }
+
+        /*listSongService = listSongs;
+
         position = intent.getIntExtra("position", 0);
-        Log.wtf("Service - position", String.valueOf(position));
+        Log.wtf("Service", String.valueOf(position));
 
         if (mediaPlayer != null){
             stopMedia();
@@ -101,11 +169,8 @@ public class ServiceMusic extends Service{
             setAutoNext();
         }
 
-        int actionMusic_from_fragmentSong = intent.getIntExtra("action_service_from_fragmentSong", 0);
-        getActionMusic(actionMusic_from_fragmentSong);
-
-//        int actionMusic_from_playMusic = intent.getIntExtra("action_service_from_playMusic", 0);
-//        getActionMusic(actionMusic_from_playMusic);
+        int actionMusic = intent.getIntExtra("action_service", 0);
+        getActionMusic(actionMusic);*/
 
 
         return START_STICKY;
@@ -113,8 +178,99 @@ public class ServiceMusic extends Service{
 
     @Override
     public void onDestroy() {
+        mediaPlayer.release();
+        updateProgressHandler.removeCallbacks(updateProgress);
+
         super.onDestroy();
-        stopMedia();
+    }
+
+    private void initPlayer() {
+        mediaPlayer = new MediaPlayer();
+
+        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        mediaPlayer.setOnPreparedListener(this);
+        mediaPlayer.setOnBufferingUpdateListener(this);
+        mediaPlayer.setOnCompletionListener(this);
+    }
+
+    @Override
+    public void onPrepared(MediaPlayer mp) {
+        mediaPlayer.start();
+
+        isPlaying = true;
+        durationCurSong = mp.getDuration();
+        updateProgressHandler.post(updateProgress);
+        sendBroadcastUpdateStatePlay();
+    }
+
+    @Override
+    public void onBufferingUpdate(MediaPlayer mp, int percent) {
+
+    }
+
+    @Override
+    public void onCompletion(MediaPlayer mp) {
+        // goi khi het bai hat
+    }
+
+    private void play() {
+        Log.wtf(TAG, "play");
+
+        if (isPlaying) {
+            if (mediaPlayer.isPlaying()) {
+                pause();
+            } else {
+                mediaPlayer.start();
+            }
+
+            sendBroadcastUpdateStatePlay();
+        } else {
+            Song curSong = DataPlayer.getInstance().getCurrentSong();
+
+            startNewSong(curSong);
+        }
+    }
+
+    private void startNewSong(Song song) {
+        Log.wtf(TAG, "startNewSong");
+
+        try {
+            isPlaying = false;
+
+            mediaPlayer.setDataSource(this, Uri.parse(song.getUrlSong()));
+            mediaPlayer.prepareAsync();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void pause() {
+        Log.wtf(TAG, "pause");
+        mediaPlayer.pause();
+    }
+
+    private void next() {
+        Log.wtf(TAG, "next");
+
+        if (DataPlayer.getInstance().hasNextSong()){
+            Song nextSong = DataPlayer.getInstance().getNextSong();
+            startNewSong(nextSong);
+        }
+    }
+
+    private void previous() {
+        if (DataPlayer.getInstance().hasPreviousSong()){
+            Song previousSong = DataPlayer.getInstance().getPreviousSong();
+            startNewSong(previousSong);
+        }
+    }
+
+    private void seekTo(int progress) {
+        if (progress > 0) {
+            int seekTo = (progress * durationCurSong) / 100;
+
+            mediaPlayer.seekTo(seekTo);
+        }
     }
 
     private void getActionMusic(int action){
@@ -126,13 +282,12 @@ public class ServiceMusic extends Service{
                 playMusic();
                 break;
             case ACTION_CLOSE:
+                stopSelf();
                 sendActionToFragmentSong(ACTION_CLOSE);
                 sendActionToActivityPlayMusic(ACTION_CLOSE);
-                stopSelf();
                 break;
             case ACTION_NEXT:
                 nextMusic();
-                sendNotification();
                 break;
             case ACTION_PREVIEW:
                 previewMusic();
@@ -172,30 +327,21 @@ public class ServiceMusic extends Service{
 
     private void nextMusic(){
         Toast.makeText(this, "Click next", Toast.LENGTH_SHORT).show();
-        if (mediaPlayer.isPlaying()){
+
             stopMedia();
-            position = ((position + 1) % listSongService.size());
-            createMedia();
-//            setData();
-            startMedia();
-//            sendNotificationMediaStyle();
+            curPosition = ((curPosition + 1) % playlist.size());
+//            createMedia();
+//            startMedia();
+            play();
             sendActionToFragmentSong(ACTION_NEXT);
             sendActionToActivityPlayMusic(ACTION_NEXT);
-        }
-        else {
-            position = ((position + 1) % listSongService.size());
-            createMedia();
-//            setData();
-//            sendNotificationMediaStyle();
-            sendActionToFragmentSong(ACTION_NEXT);
-            sendActionToActivityPlayMusic(ACTION_NEXT);
-        }
+
     }
 
     private void previewMusic(){
         if (mediaPlayer.isPlaying()) {
             stopMedia();
-            position = (((position - 1) + listSongService.size()) % listSongService.size());
+            curPosition = (((curPosition - 1) + playlist.size()) % playlist.size());
             createMedia();
 //            setData();
             startMedia();
@@ -204,7 +350,7 @@ public class ServiceMusic extends Service{
             sendActionToActivityPlayMusic(ACTION_PREVIEW);
         }
         else {
-            position = (((position - 1) + listSongService.size()) % listSongService.size());
+            curPosition = (((curPosition - 1) + playlist.size()) % playlist.size());
             createMedia();
 //            setData();
 //            sendNotificationMediaStyle();
@@ -224,10 +370,10 @@ public class ServiceMusic extends Service{
 
     private void autoNext(){
         if (!checkShuffe){
-            position = ((position + 1) % listSongService.size());
+            curPosition = ((curPosition + 1) % playlist.size());
         } else {
             Random random = new Random();
-            position = random.nextInt(listSongService.size());
+            curPosition = random.nextInt(playlist.size());
         }
         createMedia();
 //        seekBar.setProgress(0);
@@ -243,13 +389,13 @@ public class ServiceMusic extends Service{
 
 //        Uri uri = Uri.parse(listSongService.get(position).getAlbum());
 
-        byte[] albumArt = getAlbumArt(listSongs.get(position).getUrlSong());
+        byte[] albumArt = getAlbumArt(listSongs.get(curPosition).getUrlSong());
         Bitmap bitmap = BitmapFactory.decodeByteArray(albumArt, 0, albumArt.length);
 
 
         RemoteViews remoteViews = new RemoteViews(getPackageName(), R.layout.notification_custom);
-        remoteViews.setTextViewText(R.id.notification_song_name, listSongService.get(position).getSongName());
-        remoteViews.setTextViewText(R.id.notifi_artist, listSongService.get(position).getArtistName());
+        remoteViews.setTextViewText(R.id.notification_song_name, playlist.get(curPosition).getSongName());
+        remoteViews.setTextViewText(R.id.notifi_artist, playlist.get(curPosition).getArtistName());
 //        remoteViews.setImageViewResource(R.id.notifi_relaytive_layout, Integer.parseInt(listSongService.get(position).getAlbum()));
 
         remoteViews.setImageViewResource(R.id.notifi_pause_play, R.drawable.ic_baseline_pause_24_brown);
@@ -331,7 +477,7 @@ public class ServiceMusic extends Service{
     }
 
     private void createMedia(){
-        uri = Uri.parse(listSongService.get(position).getUrlSong());
+        uri = Uri.parse(playlist.get(curPosition).getUrlSong());
         mediaPlayer = MediaPlayer.create(this, uri);
         Log.wtf("Service", "create Media");
     }
@@ -351,8 +497,8 @@ public class ServiceMusic extends Service{
 
     private void sendActionToFragmentSong(int action){
         Intent intent = new Intent("send_data_to_fragmentSong");
-        intent.putExtra("position", position);
-        intent.putExtra("action_to_fragmentSong", action);
+        intent.putExtra("position", curPosition);
+        intent.putExtra("action", action);
         intent.putExtra("check_play", checkPlaying);
 
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
@@ -360,8 +506,8 @@ public class ServiceMusic extends Service{
 
     private void sendActionToActivityPlayMusic(int action){
         Intent intent = new Intent("send_data_to_activity_play_music");
-        intent.putExtra("position", position);
-        intent.putExtra("action_to_playMusic", action);
+        intent.putExtra("position", curPosition);
+        intent.putExtra("action", action);
         intent.putExtra("check_play", checkPlaying);
 
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);

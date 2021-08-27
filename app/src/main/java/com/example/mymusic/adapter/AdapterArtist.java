@@ -7,7 +7,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -15,9 +14,8 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.mymusic.ObjectSong;
+import com.example.mymusic.datamodel.Song;
 import com.example.mymusic.OnAtistListener;
-import com.example.mymusic.OnMusicListener;
 import com.example.mymusic.R;
 
 import java.util.ArrayList;
@@ -25,7 +23,7 @@ import java.util.List;
 
 public class AdapterArtist extends RecyclerView.Adapter<AdapterArtist.ArtistViewHolder> {
 
-    private List<ObjectSong> listArtists = new ArrayList();
+    private List<Song> listArtists = new ArrayList();
     private Context context;
     private OnAtistListener onAtistListener;
 
