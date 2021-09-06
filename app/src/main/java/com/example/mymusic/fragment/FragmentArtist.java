@@ -15,6 +15,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.example.mymusic.DataPlayer;
 import com.example.mymusic.activity.ActivityArtistSong;
 import com.example.mymusic.adapter.AdapterArtist;
 import com.example.mymusic.datamodel.Song;
@@ -24,15 +25,13 @@ import com.example.mymusic.R;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.example.mymusic.fragment.FragmentSongs.listSongs;
-
 
 public class FragmentArtist extends Fragment implements OnAtistListener {
 
     private RecyclerView recyclerView;
     private GridLayoutManager gridLayoutManager;
     private AdapterArtist artistAdapter;
-    public static List<Song> listSongsArtist = new ArrayList<>();
+    public List<Song> listSongsArtist = new ArrayList<>();
     static List<Song> list = new ArrayList<>();
 
     boolean checkArtist;
@@ -45,11 +44,11 @@ public class FragmentArtist extends Fragment implements OnAtistListener {
 
         loadSong();
 
+        setDataPlayer();
+
         loadListSong();
 
-        for (int i = 0; i < listSongsArtist.size(); i++){
-            Log.wtf("checklist", listSongsArtist.get(i).getArtistName());
-        }
+        Log.wtf("ArtistFragment", String.valueOf(listSongsArtist.size()));
 
     }
 
@@ -65,12 +64,16 @@ public class FragmentArtist extends Fragment implements OnAtistListener {
         return view;
     }
 
+    private void setDataPlayer(){
+        DataPlayer.getInstance().setPlaylist(list);
+    }
+
     private void loadListSong(){
         checkArtist = true;
 
         listSongsArtist.clear();
 
-        for (int i = 0; i < list.size(); i++){
+        for (int i = 0; i < DataPlayer.getInstance().getPlaylist().size(); i++){
             for (int j = (i+1); j < (list.size()); j++){
                 if (list.get(i).getArtistName().equalsIgnoreCase(list.get(j).getArtistName())){
                     checkArtist = false;
@@ -104,7 +107,7 @@ public class FragmentArtist extends Fragment implements OnAtistListener {
             while (cursor.moveToNext()) {
                 String url = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
                 String singerName = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
-                String songName = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME));
+                String songName = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
                 String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
                 String duration = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION));
 
@@ -114,9 +117,7 @@ public class FragmentArtist extends Fragment implements OnAtistListener {
     }
 
     @Override
-    public void onArtist(int i) {
-        Intent intent = new Intent(getContext(), ActivityArtistSong.class);
-        intent.putExtra("positionArtist", i);
-        startActivity(intent);
+    public void onArtist(int position) {
+        ActivityArtistSong.launch(getContext(), listSongsArtist, list, position);
     }
 }

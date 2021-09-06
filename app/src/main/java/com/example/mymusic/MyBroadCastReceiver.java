@@ -11,11 +11,12 @@ public class MyBroadCastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-        int actionMusic = intent.getIntExtra("action_music", 0);
-        Log.wtf("BroadCast", "get Action");
+        String action = intent.getAction();
+
+        Log.wtf("check action Broadcast", action);
 
         Intent intentService = new Intent(context, PlayerService.class);
-        intentService.putExtra("action_service", actionMusic);
+        intentService.setAction(action);
         context.startService(intentService);
     }
 }

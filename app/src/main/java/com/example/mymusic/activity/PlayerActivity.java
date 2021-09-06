@@ -4,21 +4,27 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.bumptech.glide.Glide;
+import com.example.mymusic.AppConfig;
 import com.example.mymusic.DataPlayer;
 import com.example.mymusic.R;
 import com.example.mymusic.datamodel.Song;
@@ -26,6 +32,9 @@ import com.example.mymusic.service_music.PlayerService;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import eightbitlab.com.blurview.BlurView;
+import eightbitlab.com.blurview.RenderScriptBlur;
 
 public class PlayerActivity extends AppCompatActivity {
     private final String TAG = getClass().getSimpleName();
@@ -42,7 +51,7 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private SeekBar seekBar;
-    private ImageButton imbShuffe;
+    private ImageButton imbShuffle;
     private ImageButton imbBack;
     private ImageButton imbPlay;
     private ImageButton imbForward;
@@ -53,15 +62,25 @@ public class PlayerActivity extends AppCompatActivity {
     private TextView tvSinggerName;
     private TextView tvDuration;
     private TextView tvCurrent;
+    private BlurView blurView;
+    private ConstraintLayout playerLayout;
+    private ImageView viewBackground;
 
     private List<Song> playlist;
 
     private int curPosition;
+    private boolean checkShuffle = false;
+    private String checkRepeat = "no repeat";
+
+    private boolean isPlaying;
+
 
     private BroadcastReceiver playerBroadcast = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
+
+            Log.wtf("PlayerActivity_Broadcast", action);
 
             if (action.equals(PlayerService.ACTION_UPDATE_PROGRESS_SONG)) {
                 int cur = intent.getIntExtra(PlayerService.EXTRA_CURRENT_PROGRESS, 0);
@@ -74,9 +93,17 @@ public class PlayerActivity extends AppCompatActivity {
                     tvDuration.setText(getTimeLabel(duration));
                 }
             } else if (action.equals(PlayerService.ACTION_UPDATE_STATE_PLAY)) {
-                boolean isPlaying = intent.getBooleanExtra(PlayerService.EXTRA_STATE_PLAY, false);
+                isPlaying = intent.getBooleanExtra(PlayerService.EXTRA_STATE_PLAY, false);
+                Log.wtf("check player", String.valueOf(isPlaying));
+//                imbPlay.setImageResource(isPlaying ? R.drawable.pause : R.drawable.play);
 
-                imbPlay.setImageResource(isPlaying ? R.drawable.pause : R.drawable.play);
+                if (isPlaying){
+                    imbPlay.setBackgroundResource(R.drawable.ic_baseline_pause_24_white);
+                } else {
+                    imbPlay.setBackgroundResource(R.drawable.ic_baseline_play_arrow_24_white);
+                }
+                AppConfig.getInstance(context).setStatePlay(isPlaying);
+
             } else if (action.equals(PlayerService.ACTION_UPDATE_SONG_INFO)) {
                 showSongInfo(DataPlayer.getInstance().getCurrentSong());
             }
@@ -109,15 +136,18 @@ public class PlayerActivity extends AppCompatActivity {
 
         init();
 
-        play();
+        setShuffleIcon();
+        setRepeatIcon();
 
-        clickNext();
+        play();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
+        updateStatePlay();
+        updateCurrentSong();
     }
 
     @Override
@@ -139,6 +169,57 @@ public class PlayerActivity extends AppCompatActivity {
         unregisterReceiver(playerBroadcast);
     }
 
+    private void updateStatePlay(){
+        isPlaying = AppConfig.getInstance(this).getStatePlay();
+        if (isPlaying){
+            imbPlay.setBackgroundResource(R.drawable.ic_baseline_pause_24_white);
+        } else {
+            imbPlay.setBackgroundResource(R.drawable.ic_baseline_play_arrow_24_white);
+        }
+    }
+
+    private void updateCurrentSong(){
+        String songName = AppConfig.getInstance(this).getSongName();
+        String artistName = AppConfig.getInstance(this).getSongArtist();
+        String path = AppConfig.getInstance(this).getSongPath();
+
+        tvSongName.setText(songName);
+        tvSinggerName.setText(artistName);
+
+        if (path != null){
+            byte[] albumArt = getAlbumArt(path);
+
+            Glide.with(this)
+                    .load(albumArt)
+                    .centerCrop()
+                    .placeholder(R.drawable.background_default_song)
+                    .into(imvImage);
+        }
+    }
+
+    private void setShuffleIcon(){
+        if (AppConfig.getInstance(this).isShuffle()){
+            imbShuffle.setBackgroundResource(R.drawable.ic_baseline_shuffle_24);
+            checkShuffle = true;
+        } else {
+            imbShuffle.setBackgroundResource(R.drawable.ic_baseline_shuffle_24_white);
+            checkShuffle = false;
+        }
+    }
+
+    private void setRepeatIcon(){
+        if (AppConfig.getInstance(this).repeat().equals("no repeat")){
+            imbRepeat.setBackgroundResource(R.drawable.ic_baseline_repeat_24_all_white);
+            checkRepeat = "no repeat";
+        } else if (AppConfig.getInstance(this).repeat().equals("repeat one")){
+            checkRepeat = "repeat one";
+            imbRepeat.setBackgroundResource(R.drawable.ic_baseline_repeat_one_24);
+        } else if (AppConfig.getInstance(this).repeat().equals("repeat all")){
+            checkRepeat = "repeat all";
+            imbRepeat.setBackgroundResource(R.drawable.ic_baseline_repeat_24);
+        }
+    }
+
     private void init() {
         playlist = getIntent().getParcelableArrayListExtra(EXTRA_PLAYLIST);
         curPosition = getIntent().getIntExtra(EXTRA_CUR_POSITION, 0);
@@ -147,7 +228,7 @@ public class PlayerActivity extends AppCompatActivity {
         imbBack         = findViewById(R.id.back);
         imbForward      = findViewById(R.id.forward);
         imbPlay         = findViewById(R.id.play);
-        imbShuffe       = findViewById(R.id.shuffe);
+        imbShuffle       = findViewById(R.id.shuffe);
         imbRepeat       = findViewById(R.id.repeat);
         imvImage        = findViewById(R.id.image);
         tvSongName      = findViewById(R.id.song_name);
@@ -155,6 +236,8 @@ public class PlayerActivity extends AppCompatActivity {
         toolbar         = findViewById(R.id.toolbar);
         tvDuration      = findViewById(R.id.duration);
         tvCurrent       = findViewById(R.id.currentPlay);
+        playerLayout    = findViewById(R.id.player_background);
+
 
         imbPlay.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -179,12 +262,26 @@ public class PlayerActivity extends AppCompatActivity {
             }
         });
 
-//        imbForward.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                next();
-//            }
-//        });
+        imbForward.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                next();
+            }
+        });
+
+        imbShuffle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                shuffle();
+            }
+        });
+
+        imbRepeat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                repeat();
+            }
+        });
 
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -206,13 +303,32 @@ public class PlayerActivity extends AppCompatActivity {
         });
     }
 
-    private void clickNext(){
-        imbForward.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                next();
-            }
-        });
+
+    private void repeat(){
+        if (checkRepeat.equals("no repeat")){
+            checkRepeat = "repeat one";
+            imbRepeat.setBackgroundResource(R.drawable.ic_baseline_repeat_one_24);
+        } else if (checkRepeat.equals("repeat one")){
+            checkRepeat = "repeat all";
+            imbRepeat.setBackgroundResource(R.drawable.ic_baseline_repeat_24_purple);
+        } else if (checkRepeat.equals("repeat all")){
+            checkRepeat = "no repeat";
+            imbRepeat.setBackgroundResource(R.drawable.ic_baseline_repeat_24_all_white);
+        }
+        AppConfig.getInstance(this).setRepeat(checkRepeat);
+    }
+
+    private void shuffle(){
+        if (!checkShuffle){
+            checkShuffle = true;
+            imbShuffle.setBackgroundResource(R.drawable.ic_baseline_shuffle_24);
+            Log.wtf("checkrepeat", "no");
+        } else {
+            checkShuffle = false;
+            imbShuffle.setBackgroundResource(R.drawable.ic_baseline_shuffle_24_white);
+            Log.wtf("checkrepeat", "yes");
+        }
+        AppConfig.getInstance(this).setShuffle(checkShuffle);
     }
 
     private void showSongInfo(Song song) {
@@ -224,8 +340,9 @@ public class PlayerActivity extends AppCompatActivity {
         Glide.with(this)
                 .load(albumArt)
                 .centerCrop()
-                .placeholder(R.drawable.background_default_song)
+                .placeholder(R.drawable.music_default_cover)
                 .into(imvImage);
+
     }
 
     private void seekTo(int progress) {
@@ -237,15 +354,19 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void play() {
-        DataPlayer dataPlayer = DataPlayer.getInstance();
-        dataPlayer.setPlaylist(playlist);
-        dataPlayer.setPlayPosition(curPosition);
+//        DataPlayer dataPlayer = DataPlayer.getInstance();
+//        dataPlayer.setPlaylist(playlist);
+//        dataPlayer.setPlayPosition(curPosition);
 
         Log.wtf("Player", "play");
 
-        Intent intent = new Intent(this, PlayerService.class);
-        intent.setAction(PlayerService.ACTION_NEW_PLAY);
-        startService(intent);
+        boolean checkNewPlay = AppConfig.getInstance(this).getIsNewPlay();
+
+        if (checkNewPlay){
+            Intent intent = new Intent(this, PlayerService.class);
+            intent.setAction(PlayerService.ACTION_NEW_PLAY);
+            startService(intent);
+        }
     }
 
     private void next(){

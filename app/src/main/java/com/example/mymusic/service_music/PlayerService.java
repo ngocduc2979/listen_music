@@ -3,27 +3,33 @@ package com.example.mymusic.service_music;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
+import android.widget.RelativeLayout;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.example.mymusic.AppConfig;
 import com.example.mymusic.DataPlayer;
 import com.example.mymusic.MyBroadCastReceiver;
-import com.example.mymusic.activity.ActivityPlayMusic;
 import com.example.mymusic.activity.PlayerActivity;
 import com.example.mymusic.datamodel.Song;
 import com.example.mymusic.R;
@@ -35,31 +41,16 @@ import java.util.List;
 import java.util.Random;
 
 import static com.example.mymusic.NotificationChannelClass.CHANNEL_ID;
-import static com.example.mymusic.fragment.FragmentSongs.listSongs;
 
 public class PlayerService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnBufferingUpdateListener, MediaPlayer.OnCompletionListener {
     private final String TAG = getClass().getSimpleName();
-
-    public static final int ACTION_PAUSE = 1;
-    public static final int ACTION_PLAY = 2;
-    public static final int ACTION_CLOSE = 3;
-    public static final int ACTION_NEXT = 4;
-    public static final int ACTION_PREVIEW = 5;
-    public static final int ACTION_START = 6;
-    public static final int ACTION_REPEAT_ONE = 7;
-    public static final int ACTION_REPEAT_ALL = 8;
-    public static final int ACTION_SHUFFE = 9;
-
-    private List<Song> playlist;
-    private int curPosition;
-
-    private static final String EXTRA_PLAYLIST = "playlist";
-    private static final String EXTRA_CUR_POSITION = "cur_position";
 
     public static final String EXTRA_CURRENT_PROGRESS = "current_progress";
     public static final String EXTRA_DURATION = "duration";
     public static final String EXTRA_STATE_PLAY = "state_play";
     public static final String EXTRA_PROGRESS = "progress";
+    public static final String EXTRA_SONG = "song";
+    public static final String EXTRA_ISPLAYING = "isplaying";
 
     public static final String ACTION_NEW_PLAY = "com.example.mymusic.NEW_PLAY";
     public static final String ACTION_PLAY_PAUSE_MUSIC = "com.example.mymusic.PLAY";
@@ -68,13 +59,21 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     public static final String ACTION_NEXT_SONG = "com.example.mymusic.NEXT";
     public static final String ACTION_PREVIOUS_SONG = "com.example.mymusic.PREVIOUS";
     public static final String ACTION_CLOSE_PLAYER = "com.example.mymusic.CLOSE";
+
     public static final String ACTION_UPDATE_SONG_INFO = "com.example.mymusic.UPDATE_SONG_INFO";
     public static final String ACTION_UPDATE_STATE_PLAY = "com.example.mymusic.UPDATE_STATE_PLAY";
     public static final String ACTION_UPDATE_PROGRESS_SONG = "com.example.mymusic.UPDATE_PROGRESS";
 
+    private static final String EXTRA_PLAYLIST = "playlist";
+    private static final String EXTRA_CUR_POSITION = "cur_position";
+
     private boolean isPlaying = false;
     private int durationCurSong = 0;
+    private MediaPlayer mediaPlayer;
+    private PendingIntent pendingIntent;
+    private RemoteViews remoteViews;
 
+    private List<Song> listShuffle = new ArrayList<>();
 //    public static void launch(Context context, List<Song> playlist, int curPosition) {
 //        Intent intent = new Intent(context, PlayerService.class);
 //
@@ -96,41 +95,12 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
         }
     };
 
-    private void sendBroadcastUpdateProgress(int cur, int duration) {
-        Intent intent = new Intent(ACTION_UPDATE_PROGRESS_SONG);
-        intent.putExtra(EXTRA_DURATION, duration);
-        intent.putExtra(EXTRA_CURRENT_PROGRESS, cur);
-
-        sendBroadcast(intent);
-    }
-
-    private void sendBroadcastUpdateStatePlay() {
-        Intent intent = new Intent(ACTION_UPDATE_STATE_PLAY);
-        intent.putExtra(EXTRA_STATE_PLAY, mediaPlayer.isPlaying());
-
-        sendBroadcast(intent);
-    }
-
-    private boolean checkPlaying = false;
-    private boolean checkShuffe = false;
-    private String checkRepeat = "no repeat";
-
-    private MediaPlayer mediaPlayer;
-    private Uri uri;
-
-
     @Override
     public void onCreate() {
         super.onCreate();
 
         initPlayer();
         Log.wtf(TAG, "On create");
-    }
-
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
     }
 
     @Override
@@ -152,32 +122,45 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
             next();
         } else if (action.equals(ACTION_PREVIOUS_SONG)){
             previous();
+        } else if (action.equals(ACTION_CLOSE_PLAYER)){
+            sendBroadcastClosePlayer();
+            stopSelf();
         }
-
-        /*listSongService = listSongs;
-
-        position = intent.getIntExtra("position", 0);
-        Log.wtf("Service", String.valueOf(position));
-
-        if (mediaPlayer != null){
-            stopMedia();
-            createMedia();
-            startMedia();
-            sendNotification();
-            setAutoNext();
-        } else {
-            createMedia();
-            startMedia();
-            sendNotification();
-            setAutoNext();
-        }
-
-        int actionMusic = intent.getIntExtra("action_service", 0);
-        getActionMusic(actionMusic);*/
-
-
         return START_STICKY;
     }
+
+
+    private void sendBroadcastNewPlay(){
+        Intent intent = new Intent(ACTION_NEW_PLAY);
+        sendBroadcast(intent);
+    }
+
+    private void sendBroadcastUpdateProgress(int cur, int duration) {
+        Intent intent = new Intent(ACTION_UPDATE_PROGRESS_SONG);
+        intent.putExtra(EXTRA_DURATION, duration);
+        intent.putExtra(EXTRA_CURRENT_PROGRESS, cur);
+
+        sendBroadcast(intent);
+    }
+
+    private void sendBroadcastUpdateStatePlay() {
+        Intent intent = new Intent(ACTION_UPDATE_STATE_PLAY);
+        intent.putExtra(EXTRA_STATE_PLAY, mediaPlayer.isPlaying());
+        sendBroadcast(intent);
+    }
+
+    private void sendBroadcastClosePlayer() {
+        Intent intent = new Intent(ACTION_CLOSE_PLAYER);
+        sendBroadcast(intent);
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+
 
     @Override
     public void onDestroy() {
@@ -214,11 +197,23 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     @Override
     public void onCompletion(MediaPlayer mp) {
         // goi khi het bai hat
+        if (AppConfig.getInstance(this).repeat().equals("no repeat")){
+            if (AppConfig.getInstance(this).isShuffle()){
+                shuffeNext();
+            } else {
+                next();
+            }
+        } else if (AppConfig.getInstance(this).repeat().equals("repeat one")){
+            repeatOne();
+        } else if (AppConfig.getInstance(this).repeat().equals("repeat all")){
+
+        }
+        sendNotification();
     }
 
 
-
     private void play() {
+
         Log.wtf(TAG, "play");
 
         if (isPlaying) {
@@ -228,6 +223,8 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
                 mediaPlayer.start();
             }
 
+            sendNotification();
+//            sendNotificationMediaStyle();
             sendBroadcastUpdateStatePlay();
         } else {
             newPlay();
@@ -237,6 +234,13 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     private void newPlay() {
         Song curSong = DataPlayer.getInstance().getCurrentSong();
 
+        AppConfig.getInstance(this).setCurrentSongName(curSong);
+        AppConfig.getInstance(this).setCurrentSongArtist(curSong);
+        AppConfig.getInstance(this).setCurrentSongPath(curSong);
+
+        sendBroadcastNewPlay();
+        sendBroadcastUpdateStatePlay();
+        sendNotification();
         startNewSong(curSong);
     }
 
@@ -255,9 +259,18 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
             mediaPlayer.prepareAsync();
 
             requestUpdateUISongInfo();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void repeatOne(){
+        Song curSong = DataPlayer.getInstance().getCurrentSong();
+        startNewSong(curSong);
+        AppConfig.getInstance(this).setCurrentSongName(curSong);
+        AppConfig.getInstance(this).setCurrentSongArtist(curSong);
+        AppConfig.getInstance(this).setCurrentSongPath(curSong);
     }
 
     private void pause() {
@@ -265,19 +278,55 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
         mediaPlayer.pause();
     }
 
+    private void shuffeNext(){
+        int shufflePosition = DataPlayer.getInstance().getShuffeNextPosition();
+
+        AppConfig.getInstance(this).setCurPosition(shufflePosition);
+        AppConfig.getInstance(this).setCurrentSongName(DataPlayer.getInstance().getPlaylist().get(shufflePosition));
+        AppConfig.getInstance(this).setCurrentSongArtist(DataPlayer.getInstance().getPlaylist().get(shufflePosition));
+        AppConfig.getInstance(this).setCurrentSongPath(DataPlayer.getInstance().getPlaylist().get(shufflePosition));
+
+        sendNotification();
+        requestUpdateUISongInfo();
+
+        startNewSong(DataPlayer.getInstance().getPlaylist().get(shufflePosition));
+    }
+
     private void next() {
         Log.wtf(TAG, "next");
 
-        if (DataPlayer.getInstance().hasNextSong()){
-            Song nextSong = DataPlayer.getInstance().getNextSong();
-            startNewSong(nextSong);
+        if(AppConfig.getInstance(this).isShuffle()){
+            shuffeNext();
+        } else {
+            int nextPosition = DataPlayer.getInstance().getNextPosition();
+
+            AppConfig.getInstance(this).setCurPosition(nextPosition);
+            AppConfig.getInstance(this).setCurrentSongName(DataPlayer.getInstance().getPlaylist().get(nextPosition));
+            AppConfig.getInstance(this).setCurrentSongArtist(DataPlayer.getInstance().getPlaylist().get(nextPosition));
+            AppConfig.getInstance(this).setCurrentSongPath(DataPlayer.getInstance().getPlaylist().get(nextPosition));
+
+            sendNotification();
+            requestUpdateUISongInfo();
+            startNewSong(DataPlayer.getInstance().getPlaylist().get(nextPosition));
         }
     }
 
     private void previous() {
-        if (DataPlayer.getInstance().hasPreviousSong()){
-            Song previousSong = DataPlayer.getInstance().getPreviousSong();
-            startNewSong(previousSong);
+
+        if(AppConfig.getInstance(this).isShuffle()){
+            shuffeNext();
+        } else {
+            int previewPosition = DataPlayer.getInstance().getPreviewPosition();
+
+            AppConfig.getInstance(this).setCurPosition(previewPosition);
+            AppConfig.getInstance(this).setCurrentSongName(DataPlayer.getInstance().getPlaylist().get(previewPosition));
+            AppConfig.getInstance(this).setCurrentSongArtist(DataPlayer.getInstance().getPlaylist().get(previewPosition));
+            AppConfig.getInstance(this).setCurrentSongPath(DataPlayer.getInstance().getPlaylist().get(previewPosition));
+
+            sendNotification();
+            requestUpdateUISongInfo();
+
+            startNewSong(DataPlayer.getInstance().getPlaylist().get(previewPosition));
         }
     }
 
@@ -289,151 +338,20 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
         }
     }
 
-    private void getActionMusic(int action){
-        switch (action){
-            case ACTION_PAUSE:
-                pauseMusic();
-                break;
-            case ACTION_PLAY:
-                playMusic();
-                break;
-            case ACTION_CLOSE:
-                stopSelf();
-                sendActionToFragmentSong(ACTION_CLOSE);
-                sendActionToActivityPlayMusic(ACTION_CLOSE);
-                break;
-            case ACTION_NEXT:
-                nextMusic();
-                break;
-            case ACTION_PREVIEW:
-                previewMusic();
-                break;
-            case ACTION_REPEAT_ONE:
-                break;
-            case ACTION_REPEAT_ALL:
-                break;
-            case ACTION_SHUFFE:
-                break;
-        }
-    }
-
-    private void pauseMusic(){
-        Toast.makeText(this, "Click pause", Toast.LENGTH_SHORT).show();
-        if (mediaPlayer != null && checkPlaying){
-            Log.wtf("Service", "pauseMusic");
-            mediaPlayer.pause();
-            checkPlaying = false;
-            sendNotification();
-            sendActionToFragmentSong(ACTION_PAUSE);
-            sendActionToActivityPlayMusic(ACTION_PAUSE);
-        }
-    }
-
-    private void playMusic(){
-        Toast.makeText(this, "Click play", Toast.LENGTH_SHORT).show();
-        if (mediaPlayer != null && !checkPlaying){
-            Log.wtf("Service", "playMusic");
-            mediaPlayer.start();
-            checkPlaying = true;
-//            sendNotificationMediaStyle();
-            sendActionToFragmentSong(ACTION_PLAY);
-            sendActionToActivityPlayMusic(ACTION_PLAY);
-        }
-    }
-
-    private void nextMusic(){
-        Toast.makeText(this, "Click next", Toast.LENGTH_SHORT).show();
-
-            stopMedia();
-            curPosition = ((curPosition + 1) % playlist.size());
-//            createMedia();
-//            startMedia();
-            play();
-            sendActionToFragmentSong(ACTION_NEXT);
-            sendActionToActivityPlayMusic(ACTION_NEXT);
-
-    }
-
-    private void previewMusic(){
-        if (mediaPlayer.isPlaying()) {
-            stopMedia();
-            curPosition = (((curPosition - 1) + playlist.size()) % playlist.size());
-            createMedia();
-//            setData();
-            startMedia();
-//            sendNotificationMediaStyle();
-            sendActionToFragmentSong(ACTION_PREVIEW);
-            sendActionToActivityPlayMusic(ACTION_PREVIEW);
-        }
-        else {
-            curPosition = (((curPosition - 1) + playlist.size()) % playlist.size());
-            createMedia();
-//            setData();
-//            sendNotificationMediaStyle();
-            sendActionToFragmentSong(ACTION_PREVIEW);
-            sendActionToActivityPlayMusic(ACTION_PREVIEW);
-        }
-    }
-
-    private void setAutoNext(){
-        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                autoNext();
-            }
-        });
-    }
-
-    private void autoNext(){
-        if (!checkShuffe){
-            curPosition = ((curPosition + 1) % playlist.size());
-        } else {
-            Random random = new Random();
-            curPosition = random.nextInt(playlist.size());
-        }
-        createMedia();
-//        seekBar.setProgress(0);
-//        setData();
-        startMedia();
-    }
-
 
     private void sendNotification(){
-        Log.wtf("Service", "send notification");
-        Intent intent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-//        Uri uri = Uri.parse(listSongService.get(position).getAlbum());
+        Song song = DataPlayer.getInstance().getCurrentSong();
 
-        byte[] albumArt = getAlbumArt(listSongs.get(curPosition).getUrlSong());
+        remoteViews = new RemoteViews(getPackageName(), R.layout.notification_custom);
+
+        byte[] albumArt = getAlbumArt(song.getUrlSong());
         Bitmap bitmap = BitmapFactory.decodeByteArray(albumArt, 0, albumArt.length);
 
+        setInfoNotification(song, remoteViews);
+        setClickNotification();
 
-        RemoteViews remoteViews = new RemoteViews(getPackageName(), R.layout.notification_custom);
-        remoteViews.setTextViewText(R.id.notification_song_name, playlist.get(curPosition).getSongName());
-        remoteViews.setTextViewText(R.id.notifi_artist, playlist.get(curPosition).getArtistName());
-//        remoteViews.setImageViewResource(R.id.notifi_relaytive_layout, Integer.parseInt(listSongService.get(position).getAlbum()));
-
-        remoteViews.setImageViewResource(R.id.notifi_pause_play, R.drawable.ic_baseline_pause_24_brown);
-
-        //click pause/play
-        if (checkPlaying){
-            remoteViews.setOnClickPendingIntent(R.id.notifi_pause_play, getPendingIntent(this, ACTION_PAUSE));
-            remoteViews.setImageViewResource(R.id.notifi_pause_play, R.drawable.ic_baseline_pause_24_brown);
-            Log.wtf("Service", "check play");
-        } else {
-            remoteViews.setOnClickPendingIntent(R.id.notifi_pause_play, getPendingIntent(this, ACTION_PLAY));
-            remoteViews.setImageViewResource(R.id.notifi_pause_play, R.drawable.ic_baseline_play_arrow_24_brown);
-        }
-
-        //click next song
-        remoteViews.setOnClickPendingIntent(R.id.notifi_nextSong, getPendingIntent(this, ACTION_NEXT));
-
-        //click preview song
-        remoteViews.setOnClickPendingIntent(R.id.notifi_backSong, getPendingIntent(this, ACTION_PREVIEW));
-
-        //click close
-        remoteViews.setOnClickPendingIntent(R.id.notifi_close, getPendingIntent(this, ACTION_CLOSE));
+        Log.wtf("Service_checkPlay", String.valueOf(mediaPlayer.isPlaying()));
 
         //set custom view
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
@@ -442,91 +360,114 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
                 .setSound(null)
                 .setSmallIcon(R.drawable.icon_music_24)
                 .setLargeIcon(bitmap)
+//                .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
                 .build();
 
-
+//        remoteViews.setImageViewBitmap(R.id.notifi_relaytive_layout, bitmap);
 
         startForeground(1, notification);
     }
 
+
+    private void setInfoNotification(Song song, RemoteViews remoteViews){
+        remoteViews.setTextViewText(R.id.notification_song_name, song.getSongName());
+        remoteViews.setTextViewText(R.id.notifi_artist, song.getArtistName());
+    }
+
+    private void setClickNotification(){
+        Intent intent = new Intent(this, PlayerActivity.class);
+        int curPosition = AppConfig.getInstance(this).getCurposition();
+
+//        intent.putExtra(EXTRA_CUR_POSITION, curPosition);
+//        intent.putParcelableArrayListExtra(EXTRA_PLAYLIST, (ArrayList<Song>) DataPlayer.getInstance().getPlaylist());
+
+        AppConfig.getInstance(this).setIsNewPlay(false);
+
+        TaskStackBuilder taskStackBuilder = TaskStackBuilder.create(this);
+        taskStackBuilder.addNextIntentWithParentStack(intent);
+
+        remoteViews.setImageViewResource(R.id.notifi_pause_play, R.drawable.pause);
+
+        pendingIntent = pendingIntent = taskStackBuilder.getPendingIntent(1, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        //click pause/play
+        if (mediaPlayer.isPlaying()){
+            remoteViews.setOnClickPendingIntent(R.id.notifi_pause_play, getPendingIntent(this, ACTION_PLAY_PAUSE_MUSIC));
+            remoteViews.setImageViewResource(R.id.notifi_pause_play, R.drawable.pause);
+            Log.wtf("Service", "check play");
+        } else {
+            remoteViews.setOnClickPendingIntent(R.id.notifi_pause_play, getPendingIntent(this, ACTION_PLAY_PAUSE_MUSIC));
+            remoteViews.setImageViewResource(R.id.notifi_pause_play, R.drawable.ic_baseline_play_arrow_24);
+        }
+
+        //click next song
+        remoteViews.setOnClickPendingIntent(R.id.notifi_nextSong, getPendingIntent(this, ACTION_NEXT_SONG));
+
+        //click preview song
+        remoteViews.setOnClickPendingIntent(R.id.notifi_backSong, getPendingIntent(this, ACTION_PREVIOUS_SONG));
+
+        //click close
+        remoteViews.setOnClickPendingIntent(R.id.notifi_close, getPendingIntent(this, ACTION_CLOSE_PLAYER));
+    }
+
 //    private void sendNotificationMediaStyle(){
+//        Song song = DataPlayer.getInstance().getCurrentSong();
 //
-//        byte[] albumArt = getAlbumArt(listSongs.get(position).getUrlSong());
+//        Log.wtf("service_notifi", "send notifi");
+//
+//        byte[] albumArt = getAlbumArt(song.getUrlSong());
 //        Bitmap bitmap = BitmapFactory.decodeByteArray(albumArt, 0, albumArt.length);
-//
-////        Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.background_default_song);
 //
 //        MediaSessionCompat mediaSessionCompat = new MediaSessionCompat(this, "sendNotification");
 //
-//        NotificationCompat.Builder notificationBuider = new NotificationCompat.Builder(this, CHANNEL_ID)
-//                .setSmallIcon(R.drawable.icon_music_24)
-//                .setSubText("Play Music")
-//                .setContentTitle(listSongService.get(position).getSongName())
-//                .setContentText(listSongService.get(position).getArtistName())
-//                .setLargeIcon(bitmap);
+//        if (mediaPlayer.isPlaying()){
+//            Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+//                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+//                    .setSmallIcon(R.drawable.icon_music_24)
+//                    .setSubText("Play Music")
+//                    .setContentTitle(song.getSongName())
+//                    .setContentText(song.getArtistName())
+//                    .setLargeIcon(bitmap)
+//                    .addAction(R.drawable.ic_baseline_skip_previous_24_brown, "back music", getPendingIntent(this, ACTION_PREVIOUS_SONG))
+//                    .addAction(R.drawable.ic_baseline_play_arrow_24_brown, "play", getPendingIntent(this, ACTION_PLAY_PAUSE_MUSIC))
+//                    .addAction(R.drawable.ic_baseline_skip_next_24_brown, "next", getPendingIntent(this, ACTION_NEXT_SONG))
+//                    .addAction(R.drawable.ic_baseline_close_24_brown, "close", getPendingIntent(this, ACTION_CLOSE_PLAYER))
+//                    .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
+//                            .setShowActionsInCompactView(0, 1, 2 /* #1: pause button */)
+//                            .setMediaSession(mediaSessionCompat.getSessionToken()))
+//                    .build();
+////
+////            NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(this);
+////            notificationManagerCompat.notify(2, notification);
 //
-//        if(checkPlaying){
-//            notificationBuider.addAction(R.drawable.ic_baseline_skip_previous_24_brown, "back music", getPendingIntent(this, ACTION_PREVIEW))
-//                                .addAction(R.drawable.ic_baseline_play_arrow_24_brown, "play", getPendingIntent(this, ACTION_PAUSE))
-//                                .addAction(R.drawable.ic_baseline_skip_next_24_brown, "next", getPendingIntent(this, ACTION_NEXT))
-//                                .addAction(R.drawable.ic_baseline_close_24_brown, "close", getPendingIntent(this, ACTION_CLOSE))
-//                                .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
-//                                .setShowActionsInCompactView(0, 1, 2 /* #1: pause button */)
-//                                .setMediaSession(mediaSessionCompat.getSessionToken()));
+//            startForeground(1, notification);
 //        } else {
-//            notificationBuider.addAction(R.drawable.ic_baseline_skip_previous_24_brown, "back music", getPendingIntent(this, ACTION_PREVIEW))
-//                                .addAction(R.drawable.ic_baseline_pause_24_brown, "play", getPendingIntent(this, ACTION_PLAY))
-//                                .addAction(R.drawable.ic_baseline_skip_next_24_brown, "next", getPendingIntent(this, ACTION_NEXT))
-//                                .addAction(R.drawable.ic_baseline_close_24_brown, "close", getPendingIntent(this, ACTION_CLOSE))
-//                                .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
-//                                .setShowActionsInCompactView(0, 1, 2 /* #1: pause button */)
-//                                .setMediaSession(mediaSessionCompat.getSessionToken()));
-//        }
+//            Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+//                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+//                    .setSmallIcon(R.drawable.icon_music_24)
+//                    .setSubText("Play Music")
+//                    .setContentTitle(song.getSongName())
+//                    .setContentText(song.getArtistName())
+//                    .setLargeIcon(bitmap)
+//                    .addAction(R.drawable.ic_baseline_skip_previous_24_brown, "back music", getPendingIntent(this, ACTION_PREVIOUS_SONG))
+//                    .addAction(R.drawable.ic_baseline_pause_24_brown, "play", getPendingIntent(this, ACTION_PLAY_PAUSE_MUSIC))
+//                    .addAction(R.drawable.ic_baseline_skip_next_24_brown, "next", getPendingIntent(this, ACTION_NEXT_SONG))
+//                    .addAction(R.drawable.ic_baseline_close_24_brown, "close", getPendingIntent(this, ACTION_CLOSE_PLAYER))
+//                    .setStyle(new androidx.media.app.NotificationCompat.MediaStyle().setShowActionsInCompactView(0, 1, 2 /* #1: pause button */)
+//                            .setMediaSession(mediaSessionCompat.getSessionToken()))
+//                    .build();
+////
+////            NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(this);
+////            notificationManagerCompat.notify(2, notification);
 //
-//        startForeground(1, notificationBuider.build());
+//            startForeground(1, notification);
+//        }
 //    }
 
-    private PendingIntent getPendingIntent(Context context, int action){
+    private PendingIntent getPendingIntent(Context context, String action){
         Intent intent = new Intent(this, MyBroadCastReceiver.class);
-        intent.putExtra("action_music", action);
-        return PendingIntent.getBroadcast(context, action, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-    }
-
-    private void createMedia(){
-        uri = Uri.parse(playlist.get(curPosition).getUrlSong());
-        mediaPlayer = MediaPlayer.create(this, uri);
-        Log.wtf("Service", "create Media");
-    }
-
-    private void startMedia(){
-        mediaPlayer.start();
-        checkPlaying = true;
-        Log.wtf("Service", "startMedia");
-        sendActionToFragmentSong(ACTION_START);
-    }
-
-    private void stopMedia(){
-        mediaPlayer.stop();
-        mediaPlayer.release();
-        Log.wtf("Service", "stop media");
-    }
-
-    private void sendActionToFragmentSong(int action){
-        Intent intent = new Intent("send_data_to_fragmentSong");
-        intent.putExtra("position", curPosition);
-        intent.putExtra("action", action);
-        intent.putExtra("check_play", checkPlaying);
-
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-    }
-
-    private void sendActionToActivityPlayMusic(int action){
-        Intent intent = new Intent("send_data_to_activity_play_music");
-        intent.putExtra("position", curPosition);
-        intent.putExtra("action", action);
-        intent.putExtra("check_play", checkPlaying);
-
-        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+        intent.setAction(action);
+        return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     private byte[] getAlbumArt(String path){

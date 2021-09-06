@@ -2,13 +2,14 @@ package com.example.mymusic;
 
 import com.example.mymusic.datamodel.Song;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class DataPlayer {
     private static DataPlayer instance;
 
     private List<Song> playlist;
-
     private int playPosition = 0;
 
     private DataPlayer() {
@@ -26,8 +27,16 @@ public class DataPlayer {
         this.playlist = playlist;
     }
 
+    public List<Song> getPlaylist(){
+        return DataPlayer.getInstance().playlist;
+    }
+
     public void setPlayPosition(int position) {
         this.playPosition = position;
+    }
+
+    public int getPlayPosition() {
+        return playPosition;
     }
 
     public Song getCurrentSong() {
@@ -39,9 +48,24 @@ public class DataPlayer {
     }
 
     public Song getNextSong() {
-        playPosition++;
+        playPosition = ((playPosition + 1) % playlist.size());
 
         return playlist.get(playPosition);
+    }
+
+    public int getNextPosition(){
+        return playPosition = ((playPosition + 1) % playlist.size());
+    }
+
+    public Song getShuffeNextSong(){
+        Random random = new Random();
+        playPosition = random.nextInt(playlist.size());
+        return  playlist.get(playPosition);
+    }
+
+    public int getShuffeNextPosition(){
+        Random random = new Random();
+        return  playPosition = random.nextInt(playlist.size());
     }
 
     public boolean hasPreviousSong() {
@@ -52,5 +76,13 @@ public class DataPlayer {
         playPosition--;
 
         return playlist.get(playPosition);
+    }
+
+    public int getPreviewPosition(){
+        if (playPosition == 0){
+            return playPosition = (playPosition - 1) % playlist.size() + playlist.size();
+        } else {
+            return playPosition --;
+        }
     }
 }

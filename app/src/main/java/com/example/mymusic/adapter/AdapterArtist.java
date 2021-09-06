@@ -47,6 +47,7 @@ public class AdapterArtist extends RecyclerView.Adapter<AdapterArtist.ArtistView
     public void onBindViewHolder(AdapterArtist.ArtistViewHolder holder, int position) {
 
         holder.tvArtistName.setText(listArtists.get(position).getArtistName());
+        holder.tvArtistName.setSelected(true);
 
         byte[] albumArt = getAlbumArt(listArtists.get(position).getUrlSong());
         Log.w("art", listArtists.get(position).getUrlSong());

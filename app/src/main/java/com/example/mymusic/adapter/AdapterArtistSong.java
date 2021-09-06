@@ -13,6 +13,8 @@ import android.widget.TextView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.mymusic.AppConfig;
+import com.example.mymusic.OnSongArtistListener;
 import com.example.mymusic.datamodel.Song;
 import com.example.mymusic.R;
 
@@ -22,6 +24,11 @@ public class AdapterArtistSong extends RecyclerView.Adapter<AdapterArtistSong.So
 
     private List<Song> listArtistSong;
     private Context context;
+    private OnSongArtistListener onSongArtistListener;
+
+    public void setOnSongArtistListener(OnSongArtistListener onSongArtistListener){
+        this.onSongArtistListener = onSongArtistListener;
+    }
 
     public AdapterArtistSong(List<Song> listArtistSong, Context context) {
         this.listArtistSong = listArtistSong;
@@ -70,7 +77,8 @@ public class AdapterArtistSong extends RecyclerView.Adapter<AdapterArtistSong.So
         holder.linearLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                onSongArtistListener.onSongArtist(position);
+                AppConfig.getInstance(v.getContext()).setIsNewPlay(true);
             }
         });
     }

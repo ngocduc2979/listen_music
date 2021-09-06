@@ -15,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.mymusic.AppConfig;
 import com.example.mymusic.datamodel.Song;
 import com.example.mymusic.OnMusicListener;
 import com.example.mymusic.R;
@@ -69,6 +70,7 @@ public class AdapterSongs extends RecyclerView.Adapter<AdapterSongs.MusicViewHol
             public void onClick(View view) {
                 if (onMusicListener != null){
                     onMusicListener.onMusic(position);
+                    AppConfig.getInstance(view.getContext()).setIsNewPlay(true);
                 }
             }
         });
