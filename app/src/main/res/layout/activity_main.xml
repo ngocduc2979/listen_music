@@ -37,7 +37,7 @@
         android:layout_width="match_parent"
         android:layout_height="64dp"
         android:visibility="visible"
-        android:background="@color/white"
+        android:background="@drawable/border"
         android:layout_alignParentBottom="true">
 
         <ImageView

@@ -27,6 +27,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.commit451.nativestackblur.NativeStackBlur;
 import com.example.mymusic.AppConfig;
 import com.example.mymusic.DataPlayer;
 import com.example.mymusic.MyBroadCastReceiver;
@@ -100,6 +101,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
         super.onCreate();
 
         initPlayer();
+
         Log.wtf(TAG, "On create");
     }
 
@@ -316,17 +318,17 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
         if(AppConfig.getInstance(this).isShuffle()){
             shuffeNext();
         } else {
-            int previewPosition = DataPlayer.getInstance().getPreviewPosition();
+            int previousPosition = DataPlayer.getInstance().getPreviewPosition();
 
-            AppConfig.getInstance(this).setCurPosition(previewPosition);
-            AppConfig.getInstance(this).setCurrentSongName(DataPlayer.getInstance().getPlaylist().get(previewPosition));
-            AppConfig.getInstance(this).setCurrentSongArtist(DataPlayer.getInstance().getPlaylist().get(previewPosition));
-            AppConfig.getInstance(this).setCurrentSongPath(DataPlayer.getInstance().getPlaylist().get(previewPosition));
+            AppConfig.getInstance(this).setCurPosition(previousPosition);
+            AppConfig.getInstance(this).setCurrentSongName(DataPlayer.getInstance().getPlaylist().get(previousPosition));
+            AppConfig.getInstance(this).setCurrentSongArtist(DataPlayer.getInstance().getPlaylist().get(previousPosition));
+            AppConfig.getInstance(this).setCurrentSongPath(DataPlayer.getInstance().getPlaylist().get(previousPosition));
 
             sendNotification();
             requestUpdateUISongInfo();
 
-            startNewSong(DataPlayer.getInstance().getPlaylist().get(previewPosition));
+            startNewSong(DataPlayer.getInstance().getPlaylist().get(previousPosition));
         }
     }
 
@@ -372,14 +374,24 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     private void setInfoNotification(Song song, RemoteViews remoteViews){
         remoteViews.setTextViewText(R.id.notification_song_name, song.getSongName());
         remoteViews.setTextViewText(R.id.notifi_artist, song.getArtistName());
+
+        long start = System.currentTimeMillis();
+
+        byte[] albumart = getAlbumArt(DataPlayer.getInstance().getCurrentSong().getUrlSong());
+        Bitmap bitmap = BitmapFactory.decodeByteArray(albumart, 0, albumart.length);
+
+        Bitmap resizeBitmap = Bitmap.createScaledBitmap(bitmap, 250, 250, false);
+
+        Bitmap bm = NativeStackBlur.process(resizeBitmap, 0);
+        remoteViews.setImageViewBitmap(R.id.imv_background, bm);
+
+        Log.wtf("checkTime", String.valueOf(bitmap.getWidth()) + " " + "width");
+        Log.wtf("checkTime", String.valueOf(bitmap.getHeight())  + " " + "height");
+//        Log.wtf("checkTime", String.valueOf(System.currentTimeMillis() - start));
     }
 
     private void setClickNotification(){
         Intent intent = new Intent(this, PlayerActivity.class);
-        int curPosition = AppConfig.getInstance(this).getCurposition();
-
-//        intent.putExtra(EXTRA_CUR_POSITION, curPosition);
-//        intent.putParcelableArrayListExtra(EXTRA_PLAYLIST, (ArrayList<Song>) DataPlayer.getInstance().getPlaylist());
 
         AppConfig.getInstance(this).setIsNewPlay(false);
 
@@ -387,6 +399,8 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
         taskStackBuilder.addNextIntentWithParentStack(intent);
 
         remoteViews.setImageViewResource(R.id.notifi_pause_play, R.drawable.pause);
+
+
 
         pendingIntent = pendingIntent = taskStackBuilder.getPendingIntent(1, PendingIntent.FLAG_UPDATE_CURRENT);
 

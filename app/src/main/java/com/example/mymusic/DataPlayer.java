@@ -80,9 +80,9 @@ public class DataPlayer {
 
     public int getPreviewPosition(){
         if (playPosition == 0){
-            return playPosition = (playPosition - 1) % playlist.size() + playlist.size();
+            return playPosition = playlist.size() - 1;
         } else {
-            return playPosition --;
+            return playPosition = playPosition - 1;
         }
     }
 }

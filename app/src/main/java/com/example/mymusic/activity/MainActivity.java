@@ -87,6 +87,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Log.wtf("Main", "onCreate");
+
         initView();
 
         if (AppConfig.getInstance(getApplicationContext()).getSongName() == null){

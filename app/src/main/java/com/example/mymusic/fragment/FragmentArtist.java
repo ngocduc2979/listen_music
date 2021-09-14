@@ -42,11 +42,9 @@ public class FragmentArtist extends Fragment implements OnAtistListener {
 
         Log.wtf("ArtistFragment", "onCreate");
 
-        loadSong();
+        loadAllSong();
 
-        setDataPlayer();
-
-        loadListSong();
+        loadListArtist();
 
         Log.wtf("ArtistFragment", String.valueOf(listSongsArtist.size()));
 
@@ -64,16 +62,12 @@ public class FragmentArtist extends Fragment implements OnAtistListener {
         return view;
     }
 
-    private void setDataPlayer(){
-        DataPlayer.getInstance().setPlaylist(list);
-    }
-
-    private void loadListSong(){
+    private void loadListArtist(){
         checkArtist = true;
 
         listSongsArtist.clear();
 
-        for (int i = 0; i < DataPlayer.getInstance().getPlaylist().size(); i++){
+        for (int i = 0; i < list.size(); i++){
             for (int j = (i+1); j < (list.size()); j++){
                 if (list.get(i).getArtistName().equalsIgnoreCase(list.get(j).getArtistName())){
                     checkArtist = false;
@@ -97,7 +91,7 @@ public class FragmentArtist extends Fragment implements OnAtistListener {
         artistAdapter.notifyDataSetChanged();
     }
 
-    private void loadSong() {
+    private void loadAllSong() {
         list.clear();
         Uri uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
         String selection = MediaStore.Audio.Media.IS_MUSIC;

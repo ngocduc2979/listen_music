@@ -76,6 +76,7 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
     @Override
     public void onResume() {
         super.onResume();
+        Log.wtf("SongFragment", "onResume");
     }
 
     @Override
@@ -116,7 +117,6 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
                 }
             }
         }
-        DataPlayer.getInstance().setPlaylist(listSongs);
     }
 
     private void initView(View view){
@@ -128,6 +128,7 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
         PlayerActivity.launch(getContext(), listSongs, position);
         AppConfig.getInstance(getContext()).setCurPosition(position);
         DataPlayer.getInstance().setPlayPosition(position);
+        DataPlayer.getInstance().setPlaylist(listSongs);
     }
 
 }

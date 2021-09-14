@@ -125,7 +125,6 @@ public class ActivityArtistSong extends AppCompatActivity implements OnSongArtis
     public void onResume() {
         super.onResume();
 
-//        loadSong();
         updateStatePlay();
         updateCurrentSong();
 
@@ -286,8 +285,6 @@ public class ActivityArtistSong extends AppCompatActivity implements OnSongArtis
                 .centerCrop()
                 .placeholder(R.drawable.music_default_cover)
                 .into(imvImageArtistCover);
-
-        DataPlayer.getInstance().setPlaylist(listSongResult);
     }
 
     private byte[] getAlbum (String path){
@@ -301,6 +298,7 @@ public class ActivityArtistSong extends AppCompatActivity implements OnSongArtis
         PlayerActivity.launch(this, listSongResult, i);
         DataPlayer.getInstance().setPlayPosition(i);
         AppConfig.getInstance(this).setCurPosition(i);
+        DataPlayer.getInstance().setPlaylist(listSongResult);
 
         Log.wtf("ArtistSong", String.valueOf(DataPlayer.getInstance().getPlayPosition()) + " " + "position");
         Log.wtf("ArtistSong", String.valueOf(DataPlayer.getInstance().getPlaylist().size()));
