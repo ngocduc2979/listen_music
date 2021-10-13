@@ -1,7 +1,6 @@
-package com.example.mymusic;
+package com.example.mymusic.notification;
 
 import android.app.Application;
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.os.Build;

@@ -1,4 +1,4 @@
-package com.example.mymusic;
+package com.example.mymusic.broadcast;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

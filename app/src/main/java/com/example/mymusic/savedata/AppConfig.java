@@ -5,6 +5,9 @@ import android.content.SharedPreferences;
 
 import com.example.mymusic.datamodel.Song;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class AppConfig {
     private final String KEY_SHUFFLE = "shuffle";
     private final String KEY_REPEAT = "repeat";
@@ -14,6 +17,7 @@ public class AppConfig {
     private final String KEY_SONG_PATH = "song_path";
     private final String KEY_CURPOSITION = "curposition";
     private final String KEY_IS_NEWPLAY = "isNewplay";
+    private final String KEY_LIST = "List";
 
     private static AppConfig instance;
     private final SharedPreferences sharedPreferences;
