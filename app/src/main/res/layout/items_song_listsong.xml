@@ -4,9 +4,9 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:id="@+id/layout_listView"
+    android:orientation="horizontal"
     android:background="@drawable/border"
     android:padding="5dp">
-
 
         <ImageView
             android:id="@+id/image_cover_id"
@@ -21,25 +21,24 @@
             android:gravity="center_horizontal"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/song_name_id"
-                android:singleLine="true"
-                android:marqueeRepeatLimit="marquee_forever"
-                android:ellipsize="marquee"
-                android:scrollHorizontally="true"
-                android:text="@string/song_name"
-                android:textSize="16dp"
-                android:textStyle="bold"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+                <TextView
+                    android:id="@+id/song_name_id"
+                    android:singleLine="true"
+                    android:marqueeRepeatLimit="marquee_forever"
+                    android:ellipsize="marquee"
+                    android:scrollHorizontally="true"
+                    android:text="@string/song_name"
+                    android:textColor="@color/black"
+                    android:textSize="16sp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
 
-            <TextView
-                android:id="@+id/singer_name_id"
-                android:textSize="12dp"
-                android:text="@string/artist_name"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
-
+                <TextView
+                    android:id="@+id/singer_name_id"
+                    android:textSize="12sp"
+                    android:text="@string/artist_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
 
     </LinearLayout>
 

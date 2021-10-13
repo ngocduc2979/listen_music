@@ -6,42 +6,33 @@ import android.app.Service;
 import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
-import android.widget.RelativeLayout;
 import android.widget.RemoteViews;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.commit451.nativestackblur.NativeStackBlur;
-import com.example.mymusic.AppConfig;
-import com.example.mymusic.DataPlayer;
-import com.example.mymusic.MyBroadCastReceiver;
+import com.example.mymusic.savedata.AppConfig;
+import com.example.mymusic.savedata.DataPlayer;
+import com.example.mymusic.broadcast.MyBroadCastReceiver;
 import com.example.mymusic.activity.PlayerActivity;
 import com.example.mymusic.datamodel.Song;
 import com.example.mymusic.R;
-import com.example.mymusic.activity.MainActivity;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
-import static com.example.mymusic.NotificationChannelClass.CHANNEL_ID;
+import static com.example.mymusic.notification.NotificationChannelClass.CHANNEL_ID;
 
 public class PlayerService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnBufferingUpdateListener, MediaPlayer.OnCompletionListener {
     private final String TAG = getClass().getSimpleName();
@@ -423,60 +414,6 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
         //click close
         remoteViews.setOnClickPendingIntent(R.id.notifi_close, getPendingIntent(this, ACTION_CLOSE_PLAYER));
     }
-
-//    private void sendNotificationMediaStyle(){
-//        Song song = DataPlayer.getInstance().getCurrentSong();
-//
-//        Log.wtf("service_notifi", "send notifi");
-//
-//        byte[] albumArt = getAlbumArt(song.getUrlSong());
-//        Bitmap bitmap = BitmapFactory.decodeByteArray(albumArt, 0, albumArt.length);
-//
-//        MediaSessionCompat mediaSessionCompat = new MediaSessionCompat(this, "sendNotification");
-//
-//        if (mediaPlayer.isPlaying()){
-//            Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-//                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-//                    .setSmallIcon(R.drawable.icon_music_24)
-//                    .setSubText("Play Music")
-//                    .setContentTitle(song.getSongName())
-//                    .setContentText(song.getArtistName())
-//                    .setLargeIcon(bitmap)
-//                    .addAction(R.drawable.ic_baseline_skip_previous_24_brown, "back music", getPendingIntent(this, ACTION_PREVIOUS_SONG))
-//                    .addAction(R.drawable.ic_baseline_play_arrow_24_brown, "play", getPendingIntent(this, ACTION_PLAY_PAUSE_MUSIC))
-//                    .addAction(R.drawable.ic_baseline_skip_next_24_brown, "next", getPendingIntent(this, ACTION_NEXT_SONG))
-//                    .addAction(R.drawable.ic_baseline_close_24_brown, "close", getPendingIntent(this, ACTION_CLOSE_PLAYER))
-//                    .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
-//                            .setShowActionsInCompactView(0, 1, 2 /* #1: pause button */)
-//                            .setMediaSession(mediaSessionCompat.getSessionToken()))
-//                    .build();
-////
-////            NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(this);
-////            notificationManagerCompat.notify(2, notification);
-//
-//            startForeground(1, notification);
-//        } else {
-//            Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-//                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-//                    .setSmallIcon(R.drawable.icon_music_24)
-//                    .setSubText("Play Music")
-//                    .setContentTitle(song.getSongName())
-//                    .setContentText(song.getArtistName())
-//                    .setLargeIcon(bitmap)
-//                    .addAction(R.drawable.ic_baseline_skip_previous_24_brown, "back music", getPendingIntent(this, ACTION_PREVIOUS_SONG))
-//                    .addAction(R.drawable.ic_baseline_pause_24_brown, "play", getPendingIntent(this, ACTION_PLAY_PAUSE_MUSIC))
-//                    .addAction(R.drawable.ic_baseline_skip_next_24_brown, "next", getPendingIntent(this, ACTION_NEXT_SONG))
-//                    .addAction(R.drawable.ic_baseline_close_24_brown, "close", getPendingIntent(this, ACTION_CLOSE_PLAYER))
-//                    .setStyle(new androidx.media.app.NotificationCompat.MediaStyle().setShowActionsInCompactView(0, 1, 2 /* #1: pause button */)
-//                            .setMediaSession(mediaSessionCompat.getSessionToken()))
-//                    .build();
-////
-////            NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(this);
-////            notificationManagerCompat.notify(2, notification);
-//
-//            startForeground(1, notification);
-//        }
-//    }
 
     private PendingIntent getPendingIntent(Context context, String action){
         Intent intent = new Intent(this, MyBroadCastReceiver.class);

@@ -1,6 +1,8 @@
 package com.example.mymusic.adapter;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -15,7 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.mymusic.datamodel.Song;
-import com.example.mymusic.OnAtistListener;
+import com.example.mymusic.listener.OnAtistListener;
 import com.example.mymusic.R;
 
 import java.util.ArrayList;
@@ -55,7 +57,7 @@ public class AdapterArtist extends RecyclerView.Adapter<AdapterArtist.ArtistView
         Glide.with(context)
                 .load(albumArt)
                 .centerCrop()
-                .placeholder(R.drawable.background_default_song)
+                .placeholder(R.drawable.music_default_cover)
                 .into(holder.imvImageArtist);
 
         holder.constraintLayout.setOnClickListener(new View.OnClickListener() {
@@ -95,4 +97,5 @@ public class AdapterArtist extends RecyclerView.Adapter<AdapterArtist.ArtistView
         mediaMetadata.setDataSource(path);
         return mediaMetadata.getEmbeddedPicture();
     }
+
 }

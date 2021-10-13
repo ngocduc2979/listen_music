@@ -1,4 +1,4 @@
-package com.example.mymusic;
+package com.example.mymusic.savedata;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -26,6 +26,7 @@ public class TinyDB {
     private SharedPreferences preferences;
     private String DEFAULT_APP_IMAGEDATA_DIRECTORY;
     private String lastImagePath = "";
+
 
     public TinyDB(Context appContext) {
         preferences = PreferenceManager.getDefaultSharedPreferences(appContext);
@@ -513,8 +514,8 @@ public class TinyDB {
 
 
     /**
-     * Register SharedPreferences change listener
-     * @param listener listener object of OnSharedPreferenceChangeListener
+     * Register SharedPreferences change com.example.mymusic.listener
+     * @param listener com.example.mymusic.listener object of OnSharedPreferenceChangeListener
      */
     public void registerOnSharedPreferenceChangeListener(
             SharedPreferences.OnSharedPreferenceChangeListener listener) {
@@ -523,8 +524,8 @@ public class TinyDB {
     }
 
     /**
-     * Unregister SharedPreferences change listener
-     * @param listener listener object of OnSharedPreferenceChangeListener to be unregistered
+     * Unregister SharedPreferences change com.example.mymusic.listener
+     * @param listener com.example.mymusic.listener object of OnSharedPreferenceChangeListener to be unregistered
      */
     public void unregisterOnSharedPreferenceChangeListener(
             SharedPreferences.OnSharedPreferenceChangeListener listener) {

@@ -1,9 +1,14 @@
 package com.example.mymusic.adapter;
 
+import android.content.ContentUris;
 import android.content.Context;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
+import android.net.Uri;
+import android.os.Build;
+import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -17,11 +22,12 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.mymusic.AppConfig;
+import com.example.mymusic.savedata.AppConfig;
 import com.example.mymusic.datamodel.Song;
-import com.example.mymusic.OnMusicListener;
+import com.example.mymusic.listener.OnMusicListener;
 import com.example.mymusic.R;
 
+import java.util.HashMap;
 import java.util.List;
 
 public class AdapterSongs extends RecyclerView.Adapter<AdapterSongs.MusicViewHolder> {
@@ -61,11 +67,11 @@ public class AdapterSongs extends RecyclerView.Adapter<AdapterSongs.MusicViewHol
         byte[] albumArt = getAlbumArt(listMusic.get(position).getUrlSong());
         Log.w("art", listMusic.get(position).getUrlSong());
 
-            Glide.with(context)
-                    .load(albumArt)
-                    .centerCrop()
-                    .placeholder(R.drawable.background_default_song)
-                    .into(holder.imvImageCover);
+        Glide.with(context)
+                .load(albumArt)
+                .centerCrop()
+                .placeholder(R.drawable.music_default_cover)
+                .into(holder.imvImageCover);
 
         holder.linearLayout.setOnClickListener(new View.OnClickListener() {
             @Override

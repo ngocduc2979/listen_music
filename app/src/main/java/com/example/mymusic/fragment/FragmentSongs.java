@@ -1,21 +1,12 @@
 package com.example.mymusic.fragment;
 
-import android.Manifest;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.PackageManager;
+import android.annotation.SuppressLint;
+import android.content.ContentUris;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
 
-import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -24,25 +15,18 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
-import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
-import com.example.mymusic.AppConfig;
-import com.example.mymusic.DataPlayer;
+import com.example.mymusic.savedata.AppConfig;
+import com.example.mymusic.savedata.DataPlayer;
 import com.example.mymusic.adapter.AdapterSongs;
 import com.example.mymusic.datamodel.Song;
-import com.example.mymusic.OnMusicListener;
+import com.example.mymusic.listener.OnMusicListener;
 import com.example.mymusic.R;
-import com.example.mymusic.service_music.PlayerService;
 import com.example.mymusic.activity.PlayerActivity;
-import com.gun0912.tedpermission.PermissionListener;
-import com.gun0912.tedpermission.TedPermission;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class FragmentSongs extends Fragment implements OnMusicListener {
@@ -50,7 +34,7 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
     private RecyclerView recyclerView;
     public List<Song> listSongs = new ArrayList<>();
     private AdapterSongs songsAdapter;
-    LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
+    private final LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
 
 
     @Override
@@ -60,8 +44,11 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
 
         Log.wtf("SongFragment", "onCreate");
 
+
+
         super.onCreate(savedInstanceState);
     }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -76,6 +63,7 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
     @Override
     public void onResume() {
         super.onResume();
+        loadSong();
         Log.wtf("SongFragment", "onResume");
     }
 
@@ -106,17 +94,39 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
 
         if (cursor != null) {
             while (cursor.moveToNext()) {
-                String url = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
-                String singerName = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
-                String songName = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
-                String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
-                String duration = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION));
+                @SuppressLint("Range") String url = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
+                @SuppressLint("Range") String singerName = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
+                @SuppressLint("Range") String songName = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.TITLE));
+                @SuppressLint("Range") String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID));
+                @SuppressLint("Range") String duration = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION));
 
+//                if (cursor.moveToNext()) {
+//                        Long albumId = Long.valueOf(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID)));
+//                        Cursor cursorAlbum = getActivity().getContentResolver().query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
+//                                new String[]{MediaStore.Audio.Albums._ID, MediaStore.Audio.Albums.ALBUM_ART},
+//                                MediaStore.Audio.Albums._ID + "=" + albumId, null, null);
+//
+//                        if(cursorAlbum != null && cursorAlbum.moveToNext()){
+//                            String albumCoverPath = cursorAlbum.getString(cursorAlbum.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART));
+//
+//                            if (!url.endsWith(".amr")) {
+//                                listSongs.add(new Song(songName, singerName, url, album, duration));
+//                            }
+//                        }
+//                }
                 if (!url.endsWith(".amr")) {
                     listSongs.add(new Song(songName, singerName, url, album, duration));
                 }
             }
         }
+
+        Collections.sort(listSongs, new Comparator<Song>() {
+            @Override
+            public int compare(Song song, Song song2) {
+                return song.getSongName().trim().compareTo(song2.getSongName().trim());
+            }
+        });
+
     }
 
     private void initView(View view){
@@ -130,7 +140,6 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
         DataPlayer.getInstance().setPlayPosition(position);
         DataPlayer.getInstance().setPlaylist(listSongs);
     }
-
 }
 
 

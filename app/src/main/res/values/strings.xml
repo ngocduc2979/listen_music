@@ -10,4 +10,13 @@
     <string name="menu_songs">Songs</string>
     <string name="menu_artists">Artists</string>
     <string name="menu_albums">Albums</string>
+
+    //menu playlist
+    <string name="edit_playlist">Edit playlist</string>
+    <string name="add_song">Add song</string>
+
+    //menu playlist item
+    <string name="edit_playlist_name_item">Rename</string>
+    <string name="delete_playlist">Delete</string>
+
 </resources>

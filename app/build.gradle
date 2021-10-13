@@ -1,17 +1,21 @@
 plugins {
     id 'com.android.application'
+
 }
 
+apply plugin: 'com.android.application'
+apply plugin: 'com.google.gms.google-services'
+apply plugin: 'com.google.firebase.crashlytics'
+
 android {
-    compileSdkVersion 30
+    compileSdkVersion 31
 
     defaultConfig {
         applicationId "com.example.mymusic"
         minSdkVersion 16
-        targetSdkVersion 30
+        targetSdkVersion 31
         versionCode 1
         versionName "1.0"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -26,6 +30,7 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 }
+
 
 dependencies {
 
@@ -53,5 +58,14 @@ dependencies {
     implementation 'com.eightbitlab:blurview:1.6.6'
 
     implementation 'com.github.Commit451:NativeStackBlur:1.0.5'
+
+    compile 'in.shaapps.librariez:preferencecheckbox:0.4-beta'
+    compile 'com.github.lguipeng:AnimCheckBox:1.0.1'
+
+    //fireBase
+    implementation platform('com.google.firebase:firebase-bom:28.4.2')
+    implementation 'com.google.firebase:firebase-crash:16.2.1'
+    implementation 'com.google.firebase:firebase-crashlytics'
+    implementation 'com.google.firebase:firebase-analytics'
 
 }

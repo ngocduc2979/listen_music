@@ -1,7 +1,6 @@
 package com.example.mymusic.activity;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager.widget.ViewPager;
 
@@ -10,10 +9,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.media.MediaMetadataRetriever;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -22,8 +21,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.example.mymusic.AppConfig;
-import com.example.mymusic.DataPlayer;
+import com.example.mymusic.savedata.AppConfig;
+import com.example.mymusic.savedata.DataPlayer;
 import com.example.mymusic.R;
 import com.example.mymusic.adapter.AdapterViewPager;
 import com.example.mymusic.datamodel.Song;
@@ -32,6 +31,7 @@ import com.example.mymusic.fragment.FragmentPlaylist;
 import com.example.mymusic.fragment.FragmentSongs;
 import com.example.mymusic.service_music.PlayerService;
 import com.google.android.material.tabs.TabLayout;
+import com.google.firebase.crash.FirebaseCrash;
 import com.gun0912.tedpermission.PermissionListener;
 import com.gun0912.tedpermission.TedPermission;
 
@@ -91,12 +91,6 @@ public class MainActivity extends AppCompatActivity {
 
         initView();
 
-        if (AppConfig.getInstance(getApplicationContext()).getSongName() == null){
-            layout_play_music.setVisibility(View.GONE);
-        } else {
-            layout_play_music.setVisibility(View.VISIBLE);
-        }
-
         requestPermission();
     }
 
@@ -117,6 +111,14 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         updateStatePlay();
         updateCurrentSong();
+
+        FirebaseCrash.log("Button clicked!");
+
+        if (AppConfig.getInstance(getApplicationContext()).getSongName() == null){
+            layout_play_music.setVisibility(View.GONE);
+        } else {
+            layout_play_music.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -158,15 +160,15 @@ public class MainActivity extends AppCompatActivity {
         tvSongName.setText(songName);
         tvArtistName.setText(artistName);
 
-        if (path != null){
-            byte[] albumArt = getAlbumArt(path);
-
-            Glide.with(this)
-                    .load(albumArt)
-                    .centerCrop()
-                    .placeholder(R.drawable.background_default_song)
-                    .into(imvImageCover);
-        }
+//        if (path != null){
+//            byte[] albumArt = getAlbumArt(path);
+//
+//            Glide.with(this)
+//                    .load(albumArt)
+//                    .centerCrop()
+//                    .placeholder(R.drawable.background_default_song)
+//                    .into(imvImageCover);
+//        }
     }
 
     private void initView(){
@@ -194,6 +196,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Intent intent = new Intent(v.getContext(), PlayerService.class);
                 intent.setAction(PlayerService.ACTION_PLAY_PAUSE_MUSIC);
+                AppConfig.getInstance(v.getContext()).setIsNewPlay(false);
                 startService(intent);
             }
         });

@@ -1,6 +1,5 @@
 package com.example.mymusic.fragment;
 
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -15,11 +14,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.example.mymusic.DataPlayer;
 import com.example.mymusic.activity.ActivityArtistSong;
 import com.example.mymusic.adapter.AdapterArtist;
 import com.example.mymusic.datamodel.Song;
-import com.example.mymusic.OnAtistListener;
+import com.example.mymusic.listener.OnAtistListener;
 import com.example.mymusic.R;
 
 import java.util.ArrayList;
@@ -40,13 +38,9 @@ public class FragmentArtist extends Fragment implements OnAtistListener {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Log.wtf("ArtistFragment", "onCreate");
-
         loadAllSong();
 
         loadListArtist();
-
-        Log.wtf("ArtistFragment", String.valueOf(listSongsArtist.size()));
 
     }
 

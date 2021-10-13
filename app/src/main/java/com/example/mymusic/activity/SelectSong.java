@@ -1,9 +1,8 @@
-package com.example.mymusic;
+package com.example.mymusic.activity;
 
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -16,17 +15,17 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.mymusic.database.PlaylistDatabase;
+import com.example.mymusic.R;
 import com.example.mymusic.adapter.SelectSongAdapter;
 import com.example.mymusic.datamodel.Song;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+
+import com.example.mymusic.listener.OnSelectSongListener;
 
 public class SelectSong extends AppCompatActivity implements OnSelectSongListener {
-
-    private static final String KEY_POSITION = "positon";
-    private static final String KEY_CHECKBOX = "isChecked";
 
     private List<Song> listSongs = new ArrayList<>();
     private List<Song> list = new ArrayList<>();
@@ -120,8 +119,6 @@ public class SelectSong extends AppCompatActivity implements OnSelectSongListene
                 playlistDatabase.querryData(addSong);
         }
     }
-
-
 
     private void loadSong(){
         listSongs.clear();

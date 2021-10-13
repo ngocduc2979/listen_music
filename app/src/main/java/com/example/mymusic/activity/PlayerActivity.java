@@ -4,30 +4,23 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.bumptech.glide.Glide;
-import com.example.mymusic.AppConfig;
-import com.example.mymusic.DataPlayer;
+import com.example.mymusic.savedata.AppConfig;
+import com.example.mymusic.savedata.DataPlayer;
 import com.example.mymusic.R;
 import com.example.mymusic.datamodel.Song;
 import com.example.mymusic.service_music.PlayerService;
@@ -36,7 +29,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import eightbitlab.com.blurview.BlurView;
-import eightbitlab.com.blurview.RenderScriptBlur;
 
 public class PlayerActivity extends AppCompatActivity {
     private final String TAG = getClass().getSimpleName();

@@ -1,12 +1,9 @@
-package com.example.mymusic;
+package com.example.mymusic.savedata;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.example.mymusic.datamodel.Song;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class AppConfig {
     private final String KEY_SHUFFLE = "shuffle";

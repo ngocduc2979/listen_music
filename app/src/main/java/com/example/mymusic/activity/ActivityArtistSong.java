@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.media.MediaMetadata;
 import android.media.MediaMetadataRetriever;
 import android.os.Bundle;
 import android.util.Log;
@@ -20,9 +19,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.mymusic.AppConfig;
-import com.example.mymusic.DataPlayer;
-import com.example.mymusic.OnSongArtistListener;
+import com.example.mymusic.savedata.AppConfig;
+import com.example.mymusic.savedata.DataPlayer;
+import com.example.mymusic.listener.OnSongArtistListener;
 import com.example.mymusic.datamodel.Song;
 import com.example.mymusic.R;
 import com.example.mymusic.adapter.AdapterArtistSong;
@@ -127,10 +126,6 @@ public class ActivityArtistSong extends AppCompatActivity implements OnSongArtis
 
         updateStatePlay();
         updateCurrentSong();
-
-        Log.wtf("ArtistSong", String.valueOf(DataPlayer.getInstance().getPlayPosition()) + " " + "position");
-        Log.wtf("ArtistSong", String.valueOf(DataPlayer.getInstance().getPlaylist().size()));
-
     }
 
     @Override
