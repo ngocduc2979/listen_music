@@ -112,8 +112,6 @@ public class MainActivity extends AppCompatActivity {
         updateStatePlay();
         updateCurrentSong();
 
-        FirebaseCrash.log("Button clicked!");
-
         if (AppConfig.getInstance(getApplicationContext()).getSongName() == null){
             layout_play_music.setVisibility(View.GONE);
         } else {
@@ -160,15 +158,15 @@ public class MainActivity extends AppCompatActivity {
         tvSongName.setText(songName);
         tvArtistName.setText(artistName);
 
-//        if (path != null){
-//            byte[] albumArt = getAlbumArt(path);
-//
-//            Glide.with(this)
-//                    .load(albumArt)
-//                    .centerCrop()
-//                    .placeholder(R.drawable.background_default_song)
-//                    .into(imvImageCover);
-//        }
+        if (path != null){
+            byte[] albumArt = getAlbumArt(path);
+
+            Glide.with(this)
+                    .load(albumArt)
+                    .centerCrop()
+                    .placeholder(R.drawable.music_default_cover)
+                    .into(imvImageCover);
+        }
     }
 
     private void initView(){
