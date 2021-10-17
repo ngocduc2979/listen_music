@@ -32,8 +32,9 @@
                 android:id="@+id/image_cover_artist"
                 android:layout_width="match_parent"
                 android:layout_height="300dp"
-                app:layout_constraintTop_toTopOf="parent"
-                android:background="@drawable/light_backgroung_music"/>
+                android:background="@drawable/music_default_cover"
+                android:scaleType="centerCrop"
+                app:layout_constraintTop_toTopOf="parent" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_list_songs"
@@ -58,10 +59,10 @@
 
         <ImageView
             android:id="@+id/imv_imageCover"
-            android:background="@drawable/music_default_cover"
             android:layout_width="64dp"
             android:layout_height="64dp"
-            android:layout_centerVertical="true"/>
+            android:layout_centerVertical="true"
+            android:background="@drawable/music_default_cover" />
 
         <LinearLayout
             android:layout_width="match_parent"

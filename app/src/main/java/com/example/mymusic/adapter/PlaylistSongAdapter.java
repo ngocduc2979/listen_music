@@ -21,6 +21,8 @@ import com.example.mymusic.savedata.AppConfig;
 import java.util.ArrayList;
 import java.util.List;
 
+import wseemann.media.FFmpegMediaMetadataRetriever;
+
 public class PlaylistSongAdapter extends RecyclerView.Adapter<PlaylistSongAdapter.ViewHolder> {
     private List<Song> playlistSong = new ArrayList<>();
     private Context context;
@@ -46,12 +48,11 @@ public class PlaylistSongAdapter extends RecyclerView.Adapter<PlaylistSongAdapte
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         holder.tvSongName.setText(playlistSong.get(position).getSongName());
         holder.tvArtistName.setText(playlistSong.get(position).getArtistName());
-        byte[] album = getAlbumArt(playlistSong.get(position).getUrlSong());
 
         Glide.with(context)
-                .load(album)
+                .load(getAlbumArt(playlistSong.get(position).getUrlSong()))
                 .centerCrop()
-                .placeholder(R.drawable.image_cover)
+                .placeholder(R.drawable.music_default_cover)
                 .into(holder.imvAlbum);
 
         holder.linearLayout.setOnClickListener(new View.OnClickListener() {
@@ -86,9 +87,14 @@ public class PlaylistSongAdapter extends RecyclerView.Adapter<PlaylistSongAdapte
         }
     }
 
-    private byte[] getAlbumArt(String path){
-        MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
-        mediaMetadataRetriever.setDataSource(path);
-        return mediaMetadataRetriever.getEmbeddedPicture();
+    private byte[] getAlbumArt(String path) {
+        FFmpegMediaMetadataRetriever mediaMetadata = new FFmpegMediaMetadataRetriever ();
+
+        try {
+            mediaMetadata.setDataSource(path);
+        } catch (Exception e) {
+        }
+
+        return mediaMetadata.getEmbeddedPicture();
     }
 }

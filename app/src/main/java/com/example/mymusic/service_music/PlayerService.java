@@ -1,5 +1,6 @@
 package com.example.mymusic.service_music;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -8,17 +9,22 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
+import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
 import android.widget.RemoteViews;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 import com.commit451.nativestackblur.NativeStackBlur;
 import com.example.mymusic.savedata.AppConfig;
@@ -45,7 +51,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     public static final String EXTRA_ISPLAYING = "isplaying";
 
     public static final String ACTION_NEW_PLAY = "com.example.mymusic.NEW_PLAY";
-    public static final String ACTION_PLAY_PAUSE_MUSIC = "com.example.mymusic.PLAY";
+    public static final String ACTION_PLAY_PAUSE_MUSIC = "com.example.mymusic.PLAY, Pause";
     public static final String ACTION_PAUSE_MUSIC = "com.example.mymusic.PAUSE";
     public static final String ACTION_SEEK = "com.example.mymusic.SEEK";
     public static final String ACTION_NEXT_SONG = "com.example.mymusic.NEXT";
@@ -102,12 +108,12 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
 
         String action = intent.getAction();
 
+        Log.wtf("onStartCommand", action);
+
         if (action.equals(ACTION_NEW_PLAY)) {
             newPlay();
         } else if (action.equals(ACTION_PLAY_PAUSE_MUSIC)) {
             play();
-        } else if (action.equals(ACTION_PAUSE_MUSIC)) {
-            pause();
         } else if (action.equals(ACTION_SEEK)) {
             int progress = intent.getIntExtra(EXTRA_PROGRESS, 0);
             seekTo(progress);
@@ -190,15 +196,15 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     @Override
     public void onCompletion(MediaPlayer mp) {
         // goi khi het bai hat
-        if (AppConfig.getInstance(this).repeat().equals("no repeat")){
+        if (AppConfig.getInstance(this).getRepeat().equals("no repeat")){
             if (AppConfig.getInstance(this).isShuffle()){
                 shuffeNext();
             } else {
                 next();
             }
-        } else if (AppConfig.getInstance(this).repeat().equals("repeat one")){
+        } else if (AppConfig.getInstance(this).getRepeat().equals("repeat one")){
             repeatOne();
-        } else if (AppConfig.getInstance(this).repeat().equals("repeat all")){
+        } else if (AppConfig.getInstance(this).getRepeat().equals("repeat all")){
 
         }
         sendNotification();
@@ -214,6 +220,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
                 pause();
             } else {
                 mediaPlayer.start();
+                AppConfig.getInstance(this).setIsPlaying(true);
             }
 
             sendNotification();
@@ -230,6 +237,8 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
         AppConfig.getInstance(this).setCurrentSongName(curSong);
         AppConfig.getInstance(this).setCurrentSongArtist(curSong);
         AppConfig.getInstance(this).setCurrentSongPath(curSong);
+
+        AppConfig.getInstance(this).setIsPlaying(true);
 
         sendBroadcastNewPlay();
         sendBroadcastUpdateStatePlay();
@@ -261,6 +270,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     private void repeatOne(){
         Song curSong = DataPlayer.getInstance().getCurrentSong();
         startNewSong(curSong);
+
         AppConfig.getInstance(this).setCurrentSongName(curSong);
         AppConfig.getInstance(this).setCurrentSongArtist(curSong);
         AppConfig.getInstance(this).setCurrentSongPath(curSong);
@@ -269,6 +279,7 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     private void pause() {
         Log.wtf(TAG, "pause");
         mediaPlayer.pause();
+        AppConfig.getInstance(this).setIsPlaying(false);
     }
 
     private void shuffeNext(){
@@ -288,39 +299,60 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
     private void next() {
         Log.wtf(TAG, "next");
 
-        if(AppConfig.getInstance(this).isShuffle()){
-            shuffeNext();
-        } else {
-            int nextPosition = DataPlayer.getInstance().getNextPosition();
+        AppConfig.getInstance(this).setIsPlaying(true);
 
-            AppConfig.getInstance(this).setCurPosition(nextPosition);
-            AppConfig.getInstance(this).setCurrentSongName(DataPlayer.getInstance().getPlaylist().get(nextPosition));
-            AppConfig.getInstance(this).setCurrentSongArtist(DataPlayer.getInstance().getPlaylist().get(nextPosition));
-            AppConfig.getInstance(this).setCurrentSongPath(DataPlayer.getInstance().getPlaylist().get(nextPosition));
+        if (AppConfig.getInstance(this).getRepeat().equals("no repeat")){
+            if(AppConfig.getInstance(this).isShuffle()){
+                shuffeNext();
+            } else {
+                int nextPosition = DataPlayer.getInstance().getNextPosition();
 
+                AppConfig.getInstance(this).setCurPosition(nextPosition);
+                AppConfig.getInstance(this).setPlaylist(DataPlayer.getInstance().getPlaylist());
+                AppConfig.getInstance(this).setCurrentSongName(DataPlayer.getInstance().getPlaylist().get(nextPosition));
+                AppConfig.getInstance(this).setCurrentSongArtist(DataPlayer.getInstance().getPlaylist().get(nextPosition));
+                AppConfig.getInstance(this).setCurrentSongPath(DataPlayer.getInstance().getPlaylist().get(nextPosition));
+
+                sendNotification();
+                requestUpdateUISongInfo();
+                startNewSong(DataPlayer.getInstance().getPlaylist().get(nextPosition));
+            }
+        } else if (AppConfig.getInstance(this).getRepeat().equals("repeat one")) {
+            int curPosition = DataPlayer.getInstance().getPlayPosition();
             sendNotification();
             requestUpdateUISongInfo();
-            startNewSong(DataPlayer.getInstance().getPlaylist().get(nextPosition));
+            startNewSong(DataPlayer.getInstance().getPlaylist().get(curPosition));
         }
+
     }
 
     private void previous() {
+        AppConfig.getInstance(this).setIsPlaying(true);
 
-        if(AppConfig.getInstance(this).isShuffle()){
-            shuffeNext();
-        } else {
-            int previousPosition = DataPlayer.getInstance().getPreviewPosition();
+        if (AppConfig.getInstance(this).getRepeat().equals("no repeat")){
+            if(AppConfig.getInstance(this).isShuffle()){
+                shuffeNext();
+            } else {
+                int previousPosition = DataPlayer.getInstance().getPreviewPosition();
 
-            AppConfig.getInstance(this).setCurPosition(previousPosition);
-            AppConfig.getInstance(this).setCurrentSongName(DataPlayer.getInstance().getPlaylist().get(previousPosition));
-            AppConfig.getInstance(this).setCurrentSongArtist(DataPlayer.getInstance().getPlaylist().get(previousPosition));
-            AppConfig.getInstance(this).setCurrentSongPath(DataPlayer.getInstance().getPlaylist().get(previousPosition));
+                AppConfig.getInstance(this).setCurPosition(previousPosition);
+                AppConfig.getInstance(this).setPlaylist(DataPlayer.getInstance().getPlaylist());
+                AppConfig.getInstance(this).setCurrentSongName(DataPlayer.getInstance().getPlaylist().get(previousPosition));
+                AppConfig.getInstance(this).setCurrentSongArtist(DataPlayer.getInstance().getPlaylist().get(previousPosition));
+                AppConfig.getInstance(this).setCurrentSongPath(DataPlayer.getInstance().getPlaylist().get(previousPosition));
 
+                sendNotification();
+                requestUpdateUISongInfo();
+
+                startNewSong(DataPlayer.getInstance().getPlaylist().get(previousPosition));
+            }
+        } else if (AppConfig.getInstance(this).getRepeat().equals("repeat one")) {
+            int curPosition = DataPlayer.getInstance().getPlayPosition();
             sendNotification();
             requestUpdateUISongInfo();
-
-            startNewSong(DataPlayer.getInstance().getPlaylist().get(previousPosition));
+            startNewSong(DataPlayer.getInstance().getPlaylist().get(curPosition));
         }
+
     }
 
     private void seekTo(int progress) {
@@ -336,31 +368,120 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
 
         Song song = DataPlayer.getInstance().getCurrentSong();
 
-        remoteViews = new RemoteViews(getPackageName(), R.layout.notification_custom);
+//        remoteViews = new RemoteViews(getPackageName(), R.layout.notification_custom);
 
-        byte[] albumArt = getAlbumArt(song.getUrlSong());
-        Bitmap bitmap = BitmapFactory.decodeByteArray(albumArt, 0, albumArt.length);
-
-        setInfoNotification(song, remoteViews);
-        setClickNotification();
-
-        Log.wtf("Service_checkPlay", String.valueOf(mediaPlayer.isPlaying()));
+//        setInfoNotification(song, remoteViews);
+//        setClickNotificationRemoteView();
 
         //set custom view
-        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentIntent(pendingIntent)
-                .setCustomContentView(remoteViews)
-                .setSound(null)
-                .setSmallIcon(R.drawable.icon_music_24)
-                .setLargeIcon(bitmap)
-//                .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
-                .build();
+//        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+//                .setContentIntent(pendingIntent)
+//                .setCustomContentView(remoteViews)
+//                .setSound(null)
+//                .setSmallIcon(R.drawable.icon_music_24)
+////                .setLargeIcon(bitmap)
+////                .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
+//                .build();
+//
+//        startForeground(1, notification);
 
-//        remoteViews.setImageViewBitmap(R.id.notifi_relaytive_layout, bitmap);
 
-        startForeground(1, notification);
+
+        byte[] albumart = getAlbumArt(DataPlayer.getInstance().getCurrentSong().getUrlSong());
+
+        Bitmap bm;
+
+        if (albumart != null) {
+            Bitmap bitmap = BitmapFactory.decodeByteArray(albumart, 0, albumart.length);
+            Bitmap resizeBitmap = Bitmap.createScaledBitmap(bitmap, 250, 250, false);
+            bm = NativeStackBlur.process(resizeBitmap, 0);
+        } else {
+            Drawable drawable = this.getResources().getDrawable(R.drawable.music_default_cover);
+            Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+            Bitmap resizeBitmap = Bitmap.createScaledBitmap(bitmap, 250, 250, false);
+            bm = NativeStackBlur.process(resizeBitmap, 0);
+        }
+
+        MediaSessionCompat mediaSessionCompat = new MediaSessionCompat(this, "tag");
+
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q){
+            if (AppConfig.getInstance(this).getIsPlaying()){
+                //Media style view
+                Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                        .setSmallIcon(R.drawable.icon_app)
+                        .setContentTitle(song.getSongName())
+                        .setContentText(song.getArtistName())
+                        .setLargeIcon(bm)
+                        .setContentIntent(setClickNotifiMediaStye())
+                        .addAction(R.drawable.ic_baseline_skip_previous_24_black07, "privious", getPendingIntent(this, ACTION_PREVIOUS_SONG))
+                        .addAction(R.drawable.ic_baseline_pause_24, "pause", getPendingIntent(this, ACTION_PLAY_PAUSE_MUSIC))
+                        .addAction(R.drawable.ic_baseline_skip_next_24_black07, "next", getPendingIntent(this, ACTION_NEXT_SONG))
+                        .addAction(R.drawable.ic_baseline_close_24_color_black, "close", getPendingIntent(this, ACTION_CLOSE_PLAYER))
+                        .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
+                                .setShowActionsInCompactView(0, 1, 2)
+                                .setMediaSession(mediaSessionCompat.getSessionToken()))
+                        .build();
+
+                startForeground(1, notification);
+            } else {
+                //Media style view
+                Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                        .setSmallIcon(R.drawable.icon_app)
+                        .setContentTitle(song.getSongName())
+                        .setContentText(song.getArtistName())
+                        .setLargeIcon(bm)
+                        .setContentIntent(setClickNotifiMediaStye())
+                        .addAction(R.drawable.ic_baseline_skip_previous_24_black07, "privious", getPendingIntent(this, ACTION_PREVIOUS_SONG))
+                        .addAction(R.drawable.ic_baseline_play_arrow_24, "pause", getPendingIntent(this, ACTION_PLAY_PAUSE_MUSIC))
+                        .addAction(R.drawable.ic_baseline_skip_next_24_black07, "next", getPendingIntent(this, ACTION_NEXT_SONG))
+                        .addAction(R.drawable.ic_baseline_close_24_color_black, "close", getPendingIntent(this, ACTION_CLOSE_PLAYER))
+                        .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
+                                .setShowActionsInCompactView(0, 1, 2)
+                                .setMediaSession(mediaSessionCompat.getSessionToken()))
+                        .build();
+
+                startForeground(1, notification);
+            }
+        } else {
+            if (AppConfig.getInstance(this).getIsPlaying()){
+                //Media style view
+                Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                        .setSmallIcon(R.drawable.icon_app)
+                        .setContentTitle(song.getSongName())
+                        .setContentText(song.getArtistName())
+                        .setLargeIcon(bm)
+                        .setContentIntent(setClickNotifiMediaStye())
+                        .addAction(R.drawable.ic_baseline_skip_previous_24_black07, "privious", getPendingIntent(this, ACTION_PREVIOUS_SONG))
+                        .addAction(R.drawable.ic_baseline_pause_24, "pause", getPendingIntent(this, ACTION_PLAY_PAUSE_MUSIC))
+                        .addAction(R.drawable.ic_baseline_skip_next_24_black07, "next", getPendingIntent(this, ACTION_NEXT_SONG))
+                        .addAction(R.drawable.ic_baseline_close_24_color_black, "close", getPendingIntent(this, ACTION_CLOSE_PLAYER))
+                        .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
+                                .setShowActionsInCompactView(0, 1, 2))
+                        .build();
+
+                startForeground(1, notification);
+            } else {
+                //Media style view
+                Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                        .setSmallIcon(R.drawable.icon_app)
+                        .setContentTitle(song.getSongName())
+                        .setContentText(song.getArtistName())
+                        .setLargeIcon(bm)
+                        .setContentIntent(setClickNotifiMediaStye())
+                        .addAction(R.drawable.ic_baseline_skip_previous_24_black07, "privious", getPendingIntent(this, ACTION_PREVIOUS_SONG))
+                        .addAction(R.drawable.ic_baseline_play_arrow_24, "pause", getPendingIntent(this, ACTION_PLAY_PAUSE_MUSIC))
+                        .addAction(R.drawable.ic_baseline_skip_next_24_black07, "next", getPendingIntent(this, ACTION_NEXT_SONG))
+                        .addAction(R.drawable.ic_baseline_close_24_color_black, "close", getPendingIntent(this, ACTION_CLOSE_PLAYER))
+                        .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
+                                .setShowActionsInCompactView(0, 1, 2))
+                        .build();
+
+                startForeground(1, notification);
+            }
+        }
+
+
     }
-
 
     private void setInfoNotification(Song song, RemoteViews remoteViews){
         remoteViews.setTextViewText(R.id.notification_song_name, song.getSongName());
@@ -369,19 +490,38 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
         long start = System.currentTimeMillis();
 
         byte[] albumart = getAlbumArt(DataPlayer.getInstance().getCurrentSong().getUrlSong());
-        Bitmap bitmap = BitmapFactory.decodeByteArray(albumart, 0, albumart.length);
 
-        Bitmap resizeBitmap = Bitmap.createScaledBitmap(bitmap, 250, 250, false);
+        if (albumart != null) {
+            Bitmap bitmap = BitmapFactory.decodeByteArray(albumart, 0, albumart.length);
 
-        Bitmap bm = NativeStackBlur.process(resizeBitmap, 0);
-        remoteViews.setImageViewBitmap(R.id.imv_background, bm);
+            Bitmap resizeBitmap = Bitmap.createScaledBitmap(bitmap, 250, 250, false);
 
-        Log.wtf("checkTime", String.valueOf(bitmap.getWidth()) + " " + "width");
-        Log.wtf("checkTime", String.valueOf(bitmap.getHeight())  + " " + "height");
+            Bitmap bm = NativeStackBlur.process(resizeBitmap, 0);
+            remoteViews.setImageViewBitmap(R.id.imv_background, bm);
+        } else {
+            Drawable drawable = this.getResources().getDrawable(R.drawable.music_default_cover);
+            Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+
+            Bitmap resizeBitmap = Bitmap.createScaledBitmap(bitmap, 250, 250, false);
+
+            Bitmap bm = NativeStackBlur.process(resizeBitmap, 0);
+            remoteViews.setImageViewBitmap(R.id.imv_background, bm);
+        }
+
+//        Log.wtf("checkTime", String.valueOf(bitmap.getWidth()) + " " + "width");
+//        Log.wtf("checkTime", String.valueOf(bitmap.getHeight())  + " " + "height");
 //        Log.wtf("checkTime", String.valueOf(System.currentTimeMillis() - start));
     }
 
-    private void setClickNotification(){
+    private PendingIntent setClickNotifiMediaStye() {
+        Intent intent = new Intent(this, PlayerActivity.class);
+        AppConfig.getInstance(this).setIsNewPlay(false);
+        TaskStackBuilder taskStackBuilder = TaskStackBuilder.create(this);
+        taskStackBuilder.addNextIntentWithParentStack(intent);
+        return pendingIntent =  taskStackBuilder.getPendingIntent(1, PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+    private void setClickNotificationRemoteView(){
         Intent intent = new Intent(this, PlayerActivity.class);
 
         AppConfig.getInstance(this).setIsNewPlay(false);
@@ -391,12 +531,19 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
 
         remoteViews.setImageViewResource(R.id.notifi_pause_play, R.drawable.pause);
 
-
-
-        pendingIntent = pendingIntent = taskStackBuilder.getPendingIntent(1, PendingIntent.FLAG_UPDATE_CURRENT);
+        pendingIntent = taskStackBuilder.getPendingIntent(1, PendingIntent.FLAG_UPDATE_CURRENT);
 
         //click pause/play
-        if (mediaPlayer.isPlaying()){
+//        if (mediaPlayer.isPlaying()){
+//            remoteViews.setOnClickPendingIntent(R.id.notifi_pause_play, getPendingIntent(this, ACTION_PLAY_PAUSE_MUSIC));
+//            remoteViews.setImageViewResource(R.id.notifi_pause_play, R.drawable.pause);
+//            Log.wtf("Service", "check play");
+//        } else {
+//            remoteViews.setOnClickPendingIntent(R.id.notifi_pause_play, getPendingIntent(this, ACTION_PLAY_PAUSE_MUSIC));
+//            remoteViews.setImageViewResource(R.id.notifi_pause_play, R.drawable.ic_baseline_play_arrow_24);
+//        }
+
+        if (AppConfig.getInstance(this).getIsPlaying()){
             remoteViews.setOnClickPendingIntent(R.id.notifi_pause_play, getPendingIntent(this, ACTION_PLAY_PAUSE_MUSIC));
             remoteViews.setImageViewResource(R.id.notifi_pause_play, R.drawable.pause);
             Log.wtf("Service", "check play");
@@ -407,10 +554,8 @@ public class PlayerService extends Service implements MediaPlayer.OnPreparedList
 
         //click next song
         remoteViews.setOnClickPendingIntent(R.id.notifi_nextSong, getPendingIntent(this, ACTION_NEXT_SONG));
-
         //click preview song
         remoteViews.setOnClickPendingIntent(R.id.notifi_backSong, getPendingIntent(this, ACTION_PREVIOUS_SONG));
-
         //click close
         remoteViews.setOnClickPendingIntent(R.id.notifi_close, getPendingIntent(this, ACTION_CLOSE_PLAYER));
     }

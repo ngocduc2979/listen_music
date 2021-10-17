@@ -20,7 +20,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-
         <LinearLayout
             android:id="@+id/layout_add"
             android:layout_width="wrap_content"
@@ -60,18 +59,17 @@
                 android:text="Edit"
                 android:textSize="18sp" />
         </LinearLayout>
-
     </RelativeLayout>
 
     <ScrollView
         app:layout_constraintTop_toBottomOf="@+id/edit_layout"
-        android:layout_marginBottom="65dp"
         android:layout_width="match_parent"
+        android:layout_marginBottom="61dp"
         android:layout_height="wrap_content">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content">
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_list"
@@ -82,11 +80,9 @@
             <ImageView
                 app:layout_constraintTop_toBottomOf="@id/recycler_list"
                 android:layout_width="match_parent"
-                android:layout_height="65dp"/>
-
+                android:layout_height="165dp"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
-
     </ScrollView>
 
     <RelativeLayout
@@ -95,8 +91,13 @@
         android:layout_height="64dp"
         app:layout_constraintBottom_toBottomOf="parent"
         android:layout_alignParentBottom="true"
-        android:background="@drawable/border"
+        android:background="@color/white"
         android:visibility="visible">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#C6C0C0" />
 
         <ImageView
             android:id="@+id/imv_imageCover"

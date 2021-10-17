@@ -23,6 +23,8 @@ import com.example.mymusic.R;
 import java.util.ArrayList;
 import java.util.List;
 
+import wseemann.media.FFmpegMediaMetadataRetriever;
+
 public class AdapterArtist extends RecyclerView.Adapter<AdapterArtist.ArtistViewHolder> {
 
     private List<Song> listArtists = new ArrayList();
@@ -51,11 +53,10 @@ public class AdapterArtist extends RecyclerView.Adapter<AdapterArtist.ArtistView
         holder.tvArtistName.setText(listArtists.get(position).getArtistName());
         holder.tvArtistName.setSelected(true);
 
-        byte[] albumArt = getAlbumArt(listArtists.get(position).getUrlSong());
         Log.w("art", listArtists.get(position).getUrlSong());
 
         Glide.with(context)
-                .load(albumArt)
+                .load(getAlbumArt(listArtists.get(position).getUrlSong()))
                 .centerCrop()
                 .placeholder(R.drawable.music_default_cover)
                 .into(holder.imvImageArtist);
@@ -92,9 +93,15 @@ public class AdapterArtist extends RecyclerView.Adapter<AdapterArtist.ArtistView
     }
 
     //get Image
-    private byte[] getAlbumArt(String path){
-        MediaMetadataRetriever mediaMetadata = new MediaMetadataRetriever();
-        mediaMetadata.setDataSource(path);
+    private byte[] getAlbumArt(String path) {
+        FFmpegMediaMetadataRetriever mediaMetadata = new FFmpegMediaMetadataRetriever ();
+        Log.wtf("getAlbumArt", path);
+
+        try {
+            mediaMetadata.setDataSource(path);
+        } catch (Exception e) {
+        }
+
         return mediaMetadata.getEmbeddedPicture();
     }
 

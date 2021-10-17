@@ -35,6 +35,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
+import wseemann.media.FFmpegMediaMetadataRetriever;
+
 
 public class PlaylistSongActivity extends AppCompatActivity implements OnPlaylistSongListener {
     private static final String KEY_POS = "position";
@@ -144,12 +146,11 @@ public class PlaylistSongActivity extends AppCompatActivity implements OnPlaylis
         tvArtistName.setText(artistName);
 
         if (path != null){
-            byte[] albumArt = getAlbumArt(path);
 
             Glide.with(this)
-                    .load(albumArt)
+                    .load(getAlbumArt(path))
                     .centerCrop()
-                    .placeholder(R.drawable.background_default_song)
+                    .placeholder(R.drawable.music_default_cover)
                     .into(imvImageCover);
         }
     }
@@ -256,10 +257,8 @@ public class PlaylistSongActivity extends AppCompatActivity implements OnPlaylis
         tvSongName.setText(song.getSongName());
         tvArtistName.setText(song.getArtistName());
 
-        byte[] albumArt = getAlbumArt(song.getUrlSong());
-
         Glide.with(this)
-                .load(albumArt)
+                .load(getAlbumArt(song.getUrlSong()))
                 .centerCrop()
                 .placeholder(R.drawable.background_default_song)
                 .into(imvImageCover);
@@ -287,9 +286,14 @@ public class PlaylistSongActivity extends AppCompatActivity implements OnPlaylis
         sortByName();
     }
 
-    private byte[] getAlbumArt(String path){
-        MediaMetadataRetriever mediaMetadata = new MediaMetadataRetriever();
-        mediaMetadata.setDataSource(path);
+    private byte[] getAlbumArt(String path) {
+        FFmpegMediaMetadataRetriever mediaMetadata = new FFmpegMediaMetadataRetriever ();
+
+        try {
+            mediaMetadata.setDataSource(path);
+        } catch (Exception e) {
+        }
+
         return mediaMetadata.getEmbeddedPicture();
     }
 
@@ -297,6 +301,7 @@ public class PlaylistSongActivity extends AppCompatActivity implements OnPlaylis
     public void onPlaylistSong(int pos) {
         PlayerActivity.launch(this, playlistSong, pos);
         AppConfig.getInstance(this).setCurPosition(pos);
+        AppConfig.getInstance(this).setPlaylist(playlistSong);
         DataPlayer.getInstance().setPlaylist(playlistSong);
         DataPlayer.getInstance().setPlayPosition(pos);
     }

@@ -1,14 +1,20 @@
 package com.example.mymusic.adapter;
 
+import static com.example.mymusic.notification.NotificationChannelClass.CHANNEL_ID;
+
+import android.app.Notification;
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
+import android.support.v4.media.session.MediaSessionCompat;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -16,19 +22,26 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RemoteViews;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.commit451.nativestackblur.NativeStackBlur;
 import com.example.mymusic.savedata.AppConfig;
 import com.example.mymusic.datamodel.Song;
 import com.example.mymusic.listener.OnMusicListener;
 import com.example.mymusic.R;
+import com.example.mymusic.savedata.DataPlayer;
 
 import java.util.HashMap;
 import java.util.List;
+
+import wseemann.media.FFmpegMediaMetadataRetriever;
 
 public class AdapterSongs extends RecyclerView.Adapter<AdapterSongs.MusicViewHolder> {
     private final String TAG = getClass().getSimpleName();
@@ -64,11 +77,9 @@ public class AdapterSongs extends RecyclerView.Adapter<AdapterSongs.MusicViewHol
 
         holder.tvSingerName.setText(song.getArtistName());
 
-        byte[] albumArt = getAlbumArt(listMusic.get(position).getUrlSong());
-        Log.w("art", listMusic.get(position).getUrlSong());
-
         Glide.with(context)
-                .load(albumArt)
+                .load(getAlbumArt(song.getUrlSong()))
+//                .load(Uri.parse(song.getUrlSong()))
                 .centerCrop()
                 .placeholder(R.drawable.music_default_cover)
                 .into(holder.imvImageCover);
@@ -110,10 +121,14 @@ public class AdapterSongs extends RecyclerView.Adapter<AdapterSongs.MusicViewHol
     }
 
     //get Image
-    private byte[] getAlbumArt(String path){
-        Log.wtf(TAG, "getAlbumArt: " + path);
-        MediaMetadataRetriever mediaMetadata = new MediaMetadataRetriever();
-        mediaMetadata.setDataSource(path);
+    private byte[] getAlbumArt(String path) {
+        FFmpegMediaMetadataRetriever mediaMetadata = new FFmpegMediaMetadataRetriever ();
+
+        try {
+            mediaMetadata.setDataSource(path);
+        } catch (Exception e) {
+        }
+
         return mediaMetadata.getEmbeddedPicture();
     }
 }

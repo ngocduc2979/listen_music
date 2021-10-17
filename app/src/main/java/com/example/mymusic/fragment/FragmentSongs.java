@@ -1,7 +1,6 @@
 package com.example.mymusic.fragment;
 
 import android.annotation.SuppressLint;
-import android.content.ContentUris;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -43,8 +42,6 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
         loadSong();
 
         Log.wtf("SongFragment", "onCreate");
-
-
 
         super.onCreate(savedInstanceState);
     }
@@ -100,20 +97,6 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
                 @SuppressLint("Range") String album = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID));
                 @SuppressLint("Range") String duration = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION));
 
-//                if (cursor.moveToNext()) {
-//                        Long albumId = Long.valueOf(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID)));
-//                        Cursor cursorAlbum = getActivity().getContentResolver().query(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
-//                                new String[]{MediaStore.Audio.Albums._ID, MediaStore.Audio.Albums.ALBUM_ART},
-//                                MediaStore.Audio.Albums._ID + "=" + albumId, null, null);
-//
-//                        if(cursorAlbum != null && cursorAlbum.moveToNext()){
-//                            String albumCoverPath = cursorAlbum.getString(cursorAlbum.getColumnIndex(MediaStore.Audio.Albums.ALBUM_ART));
-//
-//                            if (!url.endsWith(".amr")) {
-//                                listSongs.add(new Song(songName, singerName, url, album, duration));
-//                            }
-//                        }
-//                }
                 if (!url.endsWith(".amr")) {
                     listSongs.add(new Song(songName, singerName, url, album, duration));
                 }
@@ -137,8 +120,10 @@ public class FragmentSongs extends Fragment implements OnMusicListener {
     public void onMusic(int position) {
         PlayerActivity.launch(getContext(), listSongs, position);
         AppConfig.getInstance(getContext()).setCurPosition(position);
+        AppConfig.getInstance(getContext()).setPlaylist(listSongs);
         DataPlayer.getInstance().setPlayPosition(position);
         DataPlayer.getInstance().setPlaylist(listSongs);
+        Log.wtf("onMusic", String.valueOf(DataPlayer.getInstance().getPlaylist().size()));
     }
 }
 

@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.MediaMetadataRetriever;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -37,6 +38,8 @@ import com.gun0912.tedpermission.TedPermission;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import wseemann.media.FFmpegMediaMetadataRetriever;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -87,11 +90,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Log.wtf("Main", "onCreate");
+        Log.wtf("onCreateMain", String.valueOf(AppConfig.getInstance(getApplicationContext()).getCurposition()));
 
         initView();
 
         requestPermission();
+
+        setDefaultPlaySong();
     }
 
     @Override
@@ -141,7 +146,12 @@ public class MainActivity extends AppCompatActivity {
         viewPagerAdapter.notifyDataSetChanged();
     }
 
-    private void updateStatePlay(){
+    private void setDefaultPlaySong() {
+        DataPlayer.getInstance().setPlayPosition(AppConfig.getInstance(getApplicationContext()).getCurposition());
+        DataPlayer.getInstance().setPlaylist(AppConfig.getInstance(getApplicationContext()).getPlayList());
+    }
+
+    private void updateStatePlay() {
         isPlaying = AppConfig.getInstance(this).getStatePlay();
         if (isPlaying){
             imbPausePlay.setBackgroundResource(R.drawable.ic_baseline_pause_24_brown);
@@ -159,10 +169,12 @@ public class MainActivity extends AppCompatActivity {
         tvArtistName.setText(artistName);
 
         if (path != null){
-            byte[] albumArt = getAlbumArt(path);
+
+            Log.wtf("pathImage", path);
 
             Glide.with(this)
-                    .load(albumArt)
+                    .load(getAlbumArt(path))
+//                    .load(Uri.parse(path))
                     .centerCrop()
                     .placeholder(R.drawable.music_default_cover)
                     .into(imvImageCover);
@@ -222,18 +234,22 @@ public class MainActivity extends AppCompatActivity {
         tvSongName.setText(song.getSongName());
         tvArtistName.setText(song.getArtistName());
 
-        byte[] albumArt = getAlbumArt(song.getUrlSong());
-
         Glide.with(this)
-                .load(albumArt)
+                .load(getAlbumArt(song.getUrlSong()))
                 .centerCrop()
-                .placeholder(R.drawable.background_default_song)
+                .placeholder(R.drawable.music_default_cover)
                 .into(imvImageCover);
     }
 
-    private byte[] getAlbumArt(String path){
-        MediaMetadataRetriever mediaMetadata = new MediaMetadataRetriever();
-        mediaMetadata.setDataSource(path);
+    private byte[] getAlbumArt(String path) {
+        FFmpegMediaMetadataRetriever mediaMetadata = new FFmpegMediaMetadataRetriever ();
+        Log.wtf("getAlbumArt", path);
+
+        try {
+            mediaMetadata.setDataSource(path);
+        } catch (Exception e) {
+        }
+
         return mediaMetadata.getEmbeddedPicture();
     }
 

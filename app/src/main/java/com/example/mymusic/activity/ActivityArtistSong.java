@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import wseemann.media.FFmpegMediaMetadataRetriever;
+
 
 public class ActivityArtistSong extends AppCompatActivity implements OnSongArtistListener {
 
@@ -157,7 +159,7 @@ public class ActivityArtistSong extends AppCompatActivity implements OnSongArtis
             Glide.with(this)
                     .load(albumArt)
                     .centerCrop()
-                    .placeholder(R.drawable.background_default_song)
+                    .placeholder(R.drawable.music_default_cover)
                     .into(imvImageCover);
         }
     }
@@ -237,21 +239,14 @@ public class ActivityArtistSong extends AppCompatActivity implements OnSongArtis
         tvSongName.setText(song.getSongName());
         tvArtistName.setText(song.getArtistName());
 
-        byte[] albumArt = getAlbumArt(song.getUrlSong());
-
         Glide.with(this)
-                .load(albumArt)
+                .load(getAlbumArt(song.getUrlSong()))
                 .centerCrop()
-                .placeholder(R.drawable.background_default_song)
+                .placeholder(R.drawable.music_default_cover)
                 .into(imvImageCover);
 
     }
 
-    private byte[] getAlbumArt(String path){
-        MediaMetadataRetriever mediaMetadata = new MediaMetadataRetriever();
-        mediaMetadata.setDataSource(path);
-        return mediaMetadata.getEmbeddedPicture();
-    }
 
     private void setAdapter(){
         linearLayoutManager = new LinearLayoutManager(this, RecyclerView.VERTICAL, false);
@@ -273,26 +268,33 @@ public class ActivityArtistSong extends AppCompatActivity implements OnSongArtis
 
         Random random = new Random();
         int position = random.nextInt(listSongResult.size());
-        byte[] albumArt = getAlbum(listSongResult.get(position).getUrlSong());
 
         Glide.with(this)
-                .load(albumArt)
+                .load(getAlbumArt(listSongResult.get(position).getUrlSong()))
                 .centerCrop()
                 .placeholder(R.drawable.music_default_cover)
                 .into(imvImageArtistCover);
     }
 
-    private byte[] getAlbum (String path){
-        MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
-        mediaMetadataRetriever.setDataSource(path);
-        return mediaMetadataRetriever.getEmbeddedPicture();
+    private byte[] getAlbumArt(String path) {
+        MediaMetadataRetriever mediaMetadata = new MediaMetadataRetriever ();
+
+        try {
+            mediaMetadata.setDataSource(path);
+        } catch (Exception e) {
+        }
+
+        return mediaMetadata.getEmbeddedPicture();
     }
+
+
 
     @Override
     public void onSongArtist(int i) {
         PlayerActivity.launch(this, listSongResult, i);
         DataPlayer.getInstance().setPlayPosition(i);
         AppConfig.getInstance(this).setCurPosition(i);
+        AppConfig.getInstance(this).setPlaylist(listSongResult);
         DataPlayer.getInstance().setPlaylist(listSongResult);
 
         Log.wtf("ArtistSong", String.valueOf(DataPlayer.getInstance().getPlayPosition()) + " " + "position");

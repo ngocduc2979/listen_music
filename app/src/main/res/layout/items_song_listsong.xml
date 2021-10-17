@@ -10,7 +10,8 @@
 
         <ImageView
             android:id="@+id/image_cover_id"
-            android:background="@drawable/image_cover"
+            android:background="@drawable/music_default_cover"
+            android:scaleType="centerCrop"
             android:layout_width="48dp"
             android:layout_height="48dp"/>
 

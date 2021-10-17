@@ -71,7 +71,7 @@ public class AdapterArtistSong extends RecyclerView.Adapter<AdapterArtistSong.So
         Glide.with(context)
                 .load(albumArt)
                 .centerCrop()
-                .placeholder(R.drawable.image_cover)
+                .placeholder(R.drawable.music_default_cover)
                 .into(holder.imvImageCover);
 
         holder.linearLayout.setOnClickListener(new View.OnClickListener() {

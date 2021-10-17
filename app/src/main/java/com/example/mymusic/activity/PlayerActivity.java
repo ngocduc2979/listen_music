@@ -29,11 +29,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import eightbitlab.com.blurview.BlurView;
+import wseemann.media.FFmpegMediaMetadataRetriever;
 
 public class PlayerActivity extends AppCompatActivity {
     private final String TAG = getClass().getSimpleName();
     private static final String EXTRA_PLAYLIST = "playlist";
     private static final String EXTRA_CUR_POSITION = "cur_position";
+    private static final String KEY_NO_REPEAT = "no repeat";
+    private static final String KEY_REPEAT_ONE = "repeat one";
+    private static final String KEY_REPEAT_ALL = "repeat all";
 
     public static void launch(Context context, List<Song> playlist, int curPosition) {
         Intent intent = new Intent(context, PlayerActivity.class);
@@ -132,7 +136,6 @@ public class PlayerActivity extends AppCompatActivity {
 
         setShuffleIcon();
         setRepeatIcon();
-
         play();
     }
 
@@ -181,12 +184,10 @@ public class PlayerActivity extends AppCompatActivity {
         tvSinggerName.setText(artistName);
 
         if (path != null){
-            byte[] albumArt = getAlbumArt(path);
-
             Glide.with(this)
-                    .load(albumArt)
+                    .load(getAlbumArt(path))
                     .centerCrop()
-                    .placeholder(R.drawable.background_default_song)
+                    .placeholder(R.drawable.music_default_cover)
                     .into(imvImage);
         }
     }
@@ -202,14 +203,14 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void setRepeatIcon(){
-        if (AppConfig.getInstance(this).repeat().equals("no repeat")){
+        if (AppConfig.getInstance(this).getRepeat().equals(KEY_NO_REPEAT)){
             imbRepeat.setBackgroundResource(R.drawable.ic_baseline_repeat_24_all_white);
-            checkRepeat = "no repeat";
-        } else if (AppConfig.getInstance(this).repeat().equals("repeat one")){
-            checkRepeat = "repeat one";
+            checkRepeat = KEY_NO_REPEAT;
+        } else if (AppConfig.getInstance(this).getRepeat().equals(KEY_REPEAT_ONE)){
+            checkRepeat = KEY_REPEAT_ONE;
             imbRepeat.setBackgroundResource(R.drawable.ic_baseline_repeat_one_24);
-        } else if (AppConfig.getInstance(this).repeat().equals("repeat all")){
-            checkRepeat = "repeat all";
+        } else if (AppConfig.getInstance(this).getRepeat().equals(KEY_REPEAT_ALL)){
+            checkRepeat = KEY_REPEAT_ALL;
             imbRepeat.setBackgroundResource(R.drawable.ic_baseline_repeat_24);
         }
     }
@@ -299,14 +300,14 @@ public class PlayerActivity extends AppCompatActivity {
 
 
     private void repeat(){
-        if (checkRepeat.equals("no repeat")){
-            checkRepeat = "repeat one";
+        if (checkRepeat.equals(KEY_NO_REPEAT)){
+            checkRepeat = KEY_REPEAT_ONE;
             imbRepeat.setBackgroundResource(R.drawable.ic_baseline_repeat_one_24);
-        } else if (checkRepeat.equals("repeat one")){
-            checkRepeat = "repeat all";
+        } else if (checkRepeat.equals(KEY_REPEAT_ONE)){
+            checkRepeat = KEY_REPEAT_ALL;
             imbRepeat.setBackgroundResource(R.drawable.ic_baseline_repeat_24_purple);
-        } else if (checkRepeat.equals("repeat all")){
-            checkRepeat = "no repeat";
+        } else if (checkRepeat.equals(KEY_REPEAT_ALL)){
+            checkRepeat = KEY_NO_REPEAT;
             imbRepeat.setBackgroundResource(R.drawable.ic_baseline_repeat_24_all_white);
         }
         AppConfig.getInstance(this).setRepeat(checkRepeat);
@@ -329,10 +330,8 @@ public class PlayerActivity extends AppCompatActivity {
         tvSongName.setText(song.getSongName());
         tvSinggerName.setText(song.getArtistName());
 
-        byte[] albumArt = getAlbumArt(song.getUrlSong());
-
         Glide.with(this)
-                .load(albumArt)
+                .load(getAlbumArt(song.getUrlSong()))
                 .centerCrop()
                 .placeholder(R.drawable.music_default_cover)
                 .into(imvImage);
@@ -376,9 +375,14 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     //get Image
-    private byte[] getAlbumArt(String path){
-        MediaMetadataRetriever mediaMetadata = new MediaMetadataRetriever();
-        mediaMetadata.setDataSource(path);
+    private byte[] getAlbumArt(String path) {
+        FFmpegMediaMetadataRetriever mediaMetadata = new FFmpegMediaMetadataRetriever ();
+
+        try {
+            mediaMetadata.setDataSource(path);
+        } catch (Exception e) {
+        }
+
         return mediaMetadata.getEmbeddedPicture();
     }
 }
